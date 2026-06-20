@@ -38,12 +38,16 @@ later but is out of scope for v1.
 
 ## Source material
 
+- **The acronym is the spine.** S.L.O.V.O. (Czech for "word") is itself built from
+  five words: **S**ex · **L**áska · **O**samělost · **V**ina · **O**čista
+  (sex · love · loneliness · guilt · catharsis). The word is made of words. The
+  five-word core is presented as a **page-turning "book"** (see Interaction).
 - **Script** (Czech `Slovo - scénář` and English `The Word`). The play's prologue
-  splits one thought word-by-word across five characters and moves through three
-  words as chapters: **SEX → LÁSKA → SAMOTA** (sex → love → loneliness), each
-  examined until it empties out. This structure is the spine of the site.
+  splits one thought word-by-word across five characters. Used for the Prologue
+  assembly moment. Per-chapter script quotes were tried and **dropped** — the
+  words alone, with photography, carry the book.
   - Prologue fragment: *"Slovo prostě je. Ale nebylo tu vždy. Co tedy bylo, když
-    slovo nebylo? Byly smysly. Kde jsou teď? Zůstaly jen slova."* /
+    slovo nebylo? Byly smysly. Kde jsou teď? Zůstala jen slova."* /
     *"The word just is. But it hadn't always been there. What existed before
     words? There were meanings. Where are they now? Only words are left."*
   - Characters: Chtivý muž, Krásná žena, Nezkušený mladík, Čistá holčička,
@@ -57,8 +61,9 @@ later but is out of scope for v1.
    *"a play of words we've robbed of meaning."* Faint scroll cue.
 2. **Prologue** — the word-by-word fragment assembling as you scroll. First place
    the concept bites.
-3. **The three words** — chapters SEX / LÁSKA / SAMOTA. Each: one giant word, a
-   short script fragment (Czech + English), one or two portrait photos.
+3. **The book** — the five words as a page-turning sequence (S·L·O·V·O). Each page:
+   full-bleed photo + the word + its highlighted letter. An acronym indicator at
+   the top tracks which letter/word is active. No script quotes.
 4. **The piece** — 2–3 sentences on what it is (CZ + EN). Date, venue, "in Czech
    with English subtitles."
 5. **Cast & creators** — Alisa Gertsovskaya (written & directed) and the six
@@ -67,17 +72,27 @@ later but is out of scope for v1.
 6. **Tickets / footer** — booking link (from the poster QR), venue address
    (Divadlo Na prádle, Besední 3, Prague), Instagram link. Minimal.
 
-## The two expressive moments (level B)
+## Interaction: the book (listování)
+
+The five-word core is a page-turning book embedded in the scrolling page:
+
+- **Desktop:** the book section is pinned (sticky) while scrolling drives a gradual
+  3D page rotation — one full-bleed page turns around its left spine to reveal the
+  next. Scroll = leafing through.
+- **Mobile:** same scroll/swipe-driven turn (touch-scroll flips the pages). A true
+  discrete swipe-snap gesture can be added later if wanted.
+- An acronym indicator (S·L·O·V·O) at the top highlights the active letter/word.
+
+## Expressive moments
 
 1. **Prologue assembly** — words fade in one at a time on scroll; the sentence
-   comes together, then the closing line *"Zůstaly jen slova / Only words are
-   left"* lingers as the rest dims. Meaning arriving, then thinning out.
-2. **The emptied word** — at one chapter, the giant word repeats and softly
-   blurs/fades down the screen until illegible — *semantic satiation*. Used
-   **once**, so it lands.
+   comes together, then the closing line *"Zůstala jen slova"* lingers as the rest
+   dims. Meaning arriving, then thinning out.
+2. **The emptied word** — on the **OSAMĚLOST** page, the word repeats and softly
+   blurs/fades apart until illegible — *semantic satiation*. Used once.
 
-All motion respects `prefers-reduced-motion` (falls back to static, legible
-layout).
+All motion respects `prefers-reduced-motion`: the book falls back to a static
+vertical stack of full-screen pages; assembly/satiation/reveals render static.
 
 ## Tech
 

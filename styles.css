@@ -62,29 +62,21 @@ img { display: block; width: 100%; height: 100%; object-fit: cover;
 @keyframes slowdrift { to { transform: scale(1.12) translateY(-2%); } }
 .hero__veil {
   position: absolute; inset: 0;
-  background:
-    linear-gradient(180deg, rgba(10,9,8,.55) 0%, rgba(10,9,8,.15) 38%, rgba(10,9,8,.75) 100%);
+  background: linear-gradient(180deg, rgba(10,9,8,.55) 0%, rgba(10,9,8,.15) 38%, rgba(10,9,8,.75) 100%);
 }
 .hero__content { position: relative; z-index: 2; max-width: 34rem; }
 
 .wordmark {
-  font-family: var(--serif);
-  font-weight: 500;
+  font-family: var(--serif); font-weight: 500;
   font-size: clamp(3.2rem, 13vw, 9.5rem);
-  line-height: 0.92;
-  letter-spacing: 0.01em;
+  line-height: 0.92; letter-spacing: 0.01em;
   text-shadow: 0 2px 40px rgba(0,0,0,.5);
   animation: rise 1.4s cubic-bezier(.2,.7,.2,1) both;
 }
 .tagline {
-  font-family: var(--serif);
-  font-style: italic;
-  font-weight: 400;
-  font-size: clamp(1.1rem, 3.2vw, 1.9rem);
-  line-height: 1.3;
-  color: var(--paper);
-  margin-top: 1.4rem;
-  opacity: .9;
+  font-family: var(--serif); font-style: italic; font-weight: 400;
+  font-size: clamp(1.1rem, 3.2vw, 1.9rem); line-height: 1.3;
+  color: var(--paper); margin-top: 1.4rem; opacity: .9;
   animation: rise 1.4s cubic-bezier(.2,.7,.2,1) .25s both;
 }
 @keyframes rise { from { opacity: 0; transform: translateY(1.4rem); } }
@@ -93,15 +85,11 @@ img { display: block; width: 100%; height: 100%; object-fit: cover;
   position: absolute; left: var(--gutter); bottom: clamp(1.5rem, 4vh, 3rem);
   z-index: 2; display: flex; align-items: center; gap: .8rem;
   font-size: .7rem; letter-spacing: .35em; text-transform: uppercase;
-  color: var(--paper-dim);
-  animation: fadein 2s ease 1s both;
+  color: var(--paper-dim); animation: fadein 2s ease 1s both;
 }
-.scrollcue i {
-  width: 3rem; height: 1px; background: var(--paper-dim); position: relative; overflow: hidden;
-}
+.scrollcue i { width: 3rem; height: 1px; background: var(--paper-dim); position: relative; overflow: hidden; }
 .scrollcue i::after {
-  content: ""; position: absolute; inset: 0; width: 40%;
-  background: var(--paper);
+  content: ""; position: absolute; inset: 0; width: 40%; background: var(--paper);
   animation: sweep 2.6s ease-in-out infinite;
 }
 @keyframes sweep { 0%{transform:translateX(-120%)} 60%,100%{transform:translateX(320%)} }
@@ -111,26 +99,20 @@ img { display: block; width: 100%; height: 100%; object-fit: cover;
    2 — PROLOGUE  (assembly moment)
    =========================================================== */
 .prologue {
-  min-height: 100svh;
-  display: flex; flex-direction: column; justify-content: center;
+  min-height: 100svh; display: flex; flex-direction: column; justify-content: center;
   padding: clamp(5rem, 14vh, 12rem) var(--gutter);
   max-width: 54rem; margin-inline: auto;
 }
 .prologue__text {
-  font-family: var(--serif);
-  font-size: clamp(1.6rem, 5.4vw, 3.4rem);
-  line-height: 1.32;
-  font-weight: 400;
+  font-family: var(--serif); font-size: clamp(1.6rem, 5.4vw, 3.4rem);
+  line-height: 1.32; font-weight: 400;
 }
 .prologue__text span {
-  display: inline-block;
-  opacity: .08;
-  filter: blur(4px);
+  display: inline-block; opacity: .08; filter: blur(4px);
   transition: opacity .7s ease, filter .7s ease;
 }
 .prologue__text span.lit { opacity: 1; filter: blur(0); }
 .prologue__text span.em { font-style: italic; }
-
 .prologue__final {
   margin-top: clamp(2.5rem, 8vh, 6rem);
   font-family: var(--serif); font-style: italic;
@@ -141,79 +123,132 @@ img { display: block; width: 100%; height: 100%; object-fit: cover;
 .prologue.done .prologue__text span:not(.em) { opacity: .32; }
 
 /* ===========================================================
-   full-bleed photo plates (photography leads throughout)
+   full-bleed photo plates
    =========================================================== */
-.plate {
-  height: 100svh; min-height: 32rem; overflow: hidden; position: relative;
-}
-.plate img {
-  transform: scale(1.06);
-  transition: transform 1.6s cubic-bezier(.2,.7,.2,1);
-}
+.plate { height: 100svh; min-height: 32rem; overflow: hidden; position: relative; }
+.plate img { transform: scale(1.06); transition: transform 1.6s cubic-bezier(.2,.7,.2,1); }
 .plate.in img { transform: scale(1); }
 
 /* ===========================================================
-   3 — CHAPTERS
+   3 — THE BOOK  (five words, scroll-driven page turn)
    =========================================================== */
-.chapter {
-  padding: clamp(6rem, 18vh, 16rem) var(--gutter);
-  display: grid;
-  grid-template-columns: repeat(12, 1fr);
-  gap: clamp(1.5rem, 4vw, 3.5rem) clamp(1rem, 3vw, 2.5rem);
-  align-items: center;
-  border-top: 1px solid var(--rule);
+.book-wrap { position: relative; height: 540vh; border-top: 1px solid var(--rule); }
+.book-pin {
+  position: sticky; top: 0; height: 100svh; overflow: hidden;
+  perspective: 2400px; perspective-origin: 50% 45%;
+  background: var(--ink);
 }
-.chapter__head { grid-column: 1 / -1; display: flex; align-items: baseline; gap: 1.2rem; margin-bottom: 2rem; }
-.chapter__index {
-  font-family: var(--sans); font-size: .8rem; letter-spacing: .3em;
-  text-transform: uppercase; color: var(--paper-faint);
-}
-.chapter__word {
+
+/* acronym indicator */
+.acronym {
+  position: absolute; top: clamp(1.4rem, 5vh, 3rem); left: 0; right: 0; z-index: 30;
+  display: flex; justify-content: center; align-items: baseline; gap: .15em;
   font-family: var(--serif); font-weight: 500;
-  font-size: clamp(3rem, 16vw, 13rem); line-height: .85; letter-spacing: .02em;
+  font-size: clamp(.9rem, 2.4vw, 1.3rem); letter-spacing: .18em;
+  pointer-events: none; mix-blend-mode: difference; color: #fff;
+}
+.acronym span { opacity: .32; transition: opacity .5s ease, transform .5s ease; transform: translateY(0); }
+.acronym i { opacity: .22; font-style: normal; }
+.acronym span.on { opacity: 1; }
+
+/* the page stack */
+.book { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; }
+.leaf {
+  --turn: 0; --shade: 0;
+  position: absolute; inset: 0;
+  transform-origin: left center; transform-style: preserve-3d;
+  will-change: transform; transform: rotateY(0deg);
+}
+.leaf__face {
+  position: absolute; inset: 0; overflow: hidden;
+  backface-visibility: hidden; -webkit-backface-visibility: hidden;
+}
+.leaf__front { background: var(--ink); }
+.leaf__front--void { background: #050403; }
+.leaf__front--void .satiation span { color: var(--paper); }
+/* paper shading: darkens as the page angles away from the light */
+.leaf__front::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 4;
+  background: linear-gradient(90deg, rgba(0,0,0,.78) 0%, rgba(0,0,0,.32) 26%, rgba(0,0,0,0) 62%);
+  opacity: var(--shade);
+}
+/* sheen sweeping the lifting edge as the page turns */
+.leaf__front::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 5;
+  background: linear-gradient(102deg, rgba(255,255,255,0) 50%, rgba(255,255,255,.07) 70%, rgba(255,255,255,0) 86%);
+  opacity: var(--turn);
+}
+.leaf__back {
+  transform: rotateY(180deg);
+  background:
+    repeating-linear-gradient(90deg, rgba(255,255,255,.012) 0 2px, transparent 2px 5px),
+    linear-gradient(270deg, #11100e 0%, #080706 70%);
+}
+.leaf__back::after {
+  content: ""; position: absolute; top: 0; bottom: 0; right: 0; width: 30%;
+  background: linear-gradient(270deg, rgba(0,0,0,.5), transparent);
 }
 
-.chapter__photo { overflow: hidden; background: #141210; }
-.chapter__photo.tall { grid-column: 1 / 6; aspect-ratio: 3 / 4; }
-.chapter__photo.wide { grid-column: 6 / 13; aspect-ratio: 4 / 5; }
-.chapter__photo img { transition: transform 1.2s cubic-bezier(.2,.7,.2,1), filter .8s; transform: scale(1.02); }
-.chapter__photo:hover img { transform: scale(1.06); filter: grayscale(1) contrast(1.12); }
-
-.frag { font-family: var(--serif); }
-.frag.center, .frag.right { grid-column: 1 / -1; }
-.chapter .frag:not(.center):not(.right) { grid-column: 6 / 12; }
-.frag.right { text-align: right; max-width: var(--measure); margin-left: auto; }
-.frag.center { text-align: center; max-width: 40rem; margin-inline: auto; }
-.frag .cz { font-size: clamp(1.4rem, 4.5vw, 2.6rem); font-style: italic; line-height: 1.25; }
-.frag .en {
-  font-family: var(--sans); font-weight: 300;
-  font-size: clamp(.95rem, 2.4vw, 1.15rem); color: var(--paper-dim);
-  margin-top: .8rem; letter-spacing: .01em;
+.leaf__img {
+  position: absolute; inset: 0; background-size: cover; background-position: 50% 35%;
+  filter: grayscale(1) contrast(1.06); transform: scale(1.05);
+}
+.leaf__veil {
+  position: absolute; inset: 0;
+  background: radial-gradient(120% 90% at 50% 40%, rgba(10,9,8,.25) 0%, rgba(10,9,8,.72) 100%);
+}
+.leaf__text {
+  position: absolute; inset: 0; z-index: 2;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: clamp(.5rem, 2vh, 1.5rem); text-align: center; padding: var(--gutter);
+}
+.leaf__letter {
+  font-family: var(--serif); font-weight: 500;
+  font-size: clamp(4rem, 22vw, 18rem); line-height: .8;
+  color: rgba(236,232,225,.14); letter-spacing: .02em;
+}
+.leaf__word {
+  font-family: var(--serif); font-weight: 500; font-style: normal;
+  font-size: clamp(2.4rem, 10vw, 7rem); line-height: 1; letter-spacing: .04em;
+  text-transform: uppercase; margin-top: -.4em;
+  text-shadow: 0 2px 40px rgba(0,0,0,.6);
+}
+.leaf__num {
+  position: absolute; bottom: clamp(1.4rem, 5vh, 3rem); right: var(--gutter); z-index: 2;
+  font-family: var(--sans); font-size: .72rem; letter-spacing: .3em; color: var(--paper-dim);
 }
 
-/* emptied-word (semantic satiation) moment */
-.chapter--empty { position: relative; }
+/* OSAMĚLOST — semantic satiation on its page */
+.leaf__text--satiation { gap: 0; }
 .satiation {
-  grid-column: 1 / -1; position: relative;
-  display: flex; flex-direction: column; align-items: center;
+  position: relative; display: flex; flex-direction: column; align-items: center;
   font-family: var(--serif); font-weight: 500; text-transform: uppercase;
-  line-height: .92; user-select: none;
+  line-height: .9; user-select: none; margin-top: -.3em;
 }
 .satiation span {
-  font-size: clamp(2.2rem, 11vw, 8rem); letter-spacing: .04em;
-  opacity: 1; filter: blur(0); transition: opacity .9s ease, filter .9s ease, letter-spacing .9s ease;
+  font-size: clamp(1.6rem, 7vw, 5rem); letter-spacing: .04em;
+  opacity: 1; filter: blur(0);
+  transition: opacity .9s ease, filter .9s ease, letter-spacing .9s ease;
 }
-.satiation.go span { --i: 0; }
 .satiation.go span:nth-child(1){ opacity:1;   filter:blur(0); }
-.satiation.go span:nth-child(2){ opacity:.82; filter:blur(.5px); }
-.satiation.go span:nth-child(3){ opacity:.6;  filter:blur(1.5px); letter-spacing:.12em; }
-.satiation.go span:nth-child(4){ opacity:.42; filter:blur(3px);  letter-spacing:.2em; }
-.satiation.go span:nth-child(5){ opacity:.28; filter:blur(5px);  letter-spacing:.3em; }
-.satiation.go span:nth-child(6){ opacity:.16; filter:blur(8px);  letter-spacing:.42em; }
-.satiation.go span:nth-child(7){ opacity:.08; filter:blur(12px); letter-spacing:.6em; }
+.satiation.go span:nth-child(2){ opacity:.8;  filter:blur(.5px); }
+.satiation.go span:nth-child(3){ opacity:.58; filter:blur(1.5px); letter-spacing:.12em; }
+.satiation.go span:nth-child(4){ opacity:.4;  filter:blur(3px);  letter-spacing:.2em; }
+.satiation.go span:nth-child(5){ opacity:.26; filter:blur(5px);  letter-spacing:.3em; }
+.satiation.go span:nth-child(6){ opacity:.15; filter:blur(8px);  letter-spacing:.42em; }
+.satiation.go span:nth-child(7){ opacity:.07; filter:blur(12px); letter-spacing:.6em; }
 .satiation.go span:nth-child(8){ opacity:.03; filter:blur(18px); letter-spacing:.8em; }
-.chapter--empty .frag.center { margin-top: clamp(2rem, 6vh, 4rem); }
-.chapter--empty .chapter__photo.tall { grid-column: 4 / 10; margin-top: 2rem; }
+
+.book__hint {
+  position: absolute; bottom: clamp(1.4rem, 5vh, 3rem); left: var(--gutter); z-index: 30;
+  display: flex; align-items: center; gap: .7rem;
+  font-size: .7rem; letter-spacing: .35em; text-transform: uppercase; color: var(--paper-dim);
+}
+.book__hint i { width: 2.4rem; height: 1px; background: var(--paper-dim); position: relative; overflow: hidden; }
+.book__hint i::after {
+  content: ""; position: absolute; inset: 0; width: 40%; background: var(--paper);
+  animation: sweep 2.6s ease-in-out infinite;
+}
 
 /* ===========================================================
    4 — THE PIECE
@@ -228,14 +263,9 @@ img { display: block; width: 100%; height: 100%; object-fit: cover;
 .piece__photo img { transition: transform 1.2s cubic-bezier(.2,.7,.2,1); transform: scale(1.02); }
 .piece__photo:hover img { transform: scale(1.06); }
 .piece__col { grid-column: 7 / 13; display: flex; flex-direction: column; gap: clamp(2.5rem, 6vh, 4rem); }
-.piece__body {
-  font-family: var(--serif); font-size: clamp(1.4rem, 3.2vw, 2.2rem);
-  line-height: 1.45;
-}
+.piece__body { font-family: var(--serif); font-size: clamp(1.4rem, 3.2vw, 2.2rem); line-height: 1.45; }
 .piece__body em { font-style: italic; }
-.facts {
-  display: flex; flex-wrap: wrap; gap: 1.8rem clamp(2rem, 5vw, 4rem);
-}
+.facts { display: flex; flex-wrap: wrap; gap: 1.8rem clamp(2rem, 5vw, 4rem); }
 .facts dt {
   font-size: .72rem; letter-spacing: .3em; text-transform: uppercase;
   color: var(--paper-faint); margin-bottom: .35rem;
@@ -247,8 +277,7 @@ img { display: block; width: 100%; height: 100%; object-fit: cover;
    =========================================================== */
 .credits {
   padding: clamp(6rem, 16vh, 14rem) var(--gutter);
-  border-top: 1px solid var(--rule);
-  text-align: center;
+  border-top: 1px solid var(--rule); text-align: center;
 }
 .credits__lead {
   font-size: .74rem; letter-spacing: .34em; text-transform: uppercase;
@@ -265,8 +294,7 @@ img { display: block; width: 100%; height: 100%; object-fit: cover;
 }
 .cast li { position: relative; }
 .cast li + li::before {
-  content: "·"; position: absolute; left: clamp(-.95rem,-2vw,-1.9rem);
-  color: var(--paper-faint);
+  content: "·"; position: absolute; left: clamp(-.95rem,-2vw,-1.9rem); color: var(--paper-faint);
 }
 
 /* ===========================================================
@@ -275,8 +303,7 @@ img { display: block; width: 100%; height: 100%; object-fit: cover;
 .foot {
   position: relative; overflow: hidden;
   padding: clamp(7rem, 20vh, 16rem) var(--gutter) clamp(3rem, 8vh, 5rem);
-  border-top: 1px solid var(--rule);
-  text-align: center;
+  border-top: 1px solid var(--rule); text-align: center;
 }
 .foot__img {
   position: absolute; inset: 0; background-size: cover; background-position: 50% 35%;
@@ -297,7 +324,6 @@ img { display: block; width: 100%; height: 100%; object-fit: cover;
 .tickets:hover { transform: translateY(-3px); background: var(--paper-dim); }
 .tickets__arrow { transition: transform .4s; }
 .tickets:hover .tickets__arrow { transform: translateX(.4rem); }
-
 .foot__meta {
   margin-top: clamp(3rem, 8vh, 5rem);
   display: flex; flex-wrap: wrap; justify-content: center; gap: .6rem 2rem;
@@ -320,16 +346,13 @@ img { display: block; width: 100%; height: 100%; object-fit: cover;
 
 /* ---- responsive ----------------------------------------- */
 @media (max-width: 720px) {
-  .chapter__photo.tall, .chapter__photo.wide,
-  .chapter--empty .chapter__photo.tall { grid-column: 1 / -1; }
-  .chapter .frag:not(.center):not(.right) { grid-column: 1 / -1; }
-  .frag.right { text-align: left; margin-left: 0; }
   .piece__photo, .piece__col { grid-column: 1 / -1; }
   .piece__photo { aspect-ratio: 4 / 5; }
   .facts { gap: 1.5rem 2.5rem; }
+  .book-wrap { height: 460vh; }
 }
 
-/* ---- reduced motion ------------------------------------- */
+/* ---- reduced motion: book becomes a static stack -------- */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
   .prologue__text span { opacity: 1; filter: none; }
@@ -337,4 +360,11 @@ img { display: block; width: 100%; height: 100%; object-fit: cover;
   .satiation span { opacity: 1; filter: none; }
   [data-reveal] { opacity: 1; transform: none; }
   .hero__img { animation: none; }
+
+  .book-wrap { height: auto !important; }
+  .book-pin { position: static !important; height: auto !important; perspective: none; }
+  .acronym, .book__hint { display: none; }
+  .book { display: block; }
+  .leaf { position: relative !important; inset: auto; height: 80svh; transform: none !important; }
+  .leaf__back { display: none; }
 }
