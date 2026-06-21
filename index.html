@@ -13,177 +13,165 @@
 <body>
 <div class="grain" aria-hidden="true"></div>
 
-<!-- 1 — OPENING -->
-<header class="hero">
-  <div class="hero__img" style="background-image:url('images/sample/photo1.jpg')"></div>
-  <div class="hero__veil"></div>
-  <div class="hero__content">
-    <h1 class="wordmark">S.L.O.V.O.</h1>
-    <p class="tagline">hra o slovech,<br />která jsme připravili o&nbsp;význam</p>
-  </div>
-  <div class="scrollcue" aria-hidden="true"><span>dolů</span><i></i></div>
-</header>
-
-<!-- full-bleed plate -->
-<section class="plate" data-reveal>
-  <img src="images/sample/photo2.jpg" alt="" loading="lazy" />
-</section>
-
-<!-- 2 — PROLOGUE  (assembly moment) -->
-<section class="prologue" data-assemble>
-  <p class="prologue__text">
-    <span>Slovo</span> <span>prostě</span> <span>je.</span>
-    <span>Ale</span> <span>nebylo</span> <span>tu</span> <span>vždy.</span>
-    <span>Co</span> <span>tedy</span> <span>bylo,</span>
-    <span>když</span> <span>slovo</span> <span>nebylo?</span>
-    <span class="em">Byly</span> <span class="em">smysly.</span>
-    <span>Kde</span> <span>jsou</span> <span>teď?</span>
-  </p>
-  <p class="prologue__final">Zůstala jen slova.</p>
-</section>
-
-<!-- 3 — THE BOOK: five words, S·L·O·V·O -->
-<section class="book-wrap" data-book-wrap>
-  <div class="book-pin">
+<!-- 1+2+3 — the whole opening is ONE zoom: hero → photo → prologue → S·L·O·V·O -->
+<section class="zoom-wrap" data-zoom-wrap>
+  <div class="zoom-pin">
 
     <nav class="acronym" aria-hidden="true">
       <span data-letter>S</span><i>.</i><span data-letter>L</span><i>.</i><span data-letter>O</span><i>.</i><span data-letter>V</span><i>.</i><span data-letter>O</span><i>.</i>
     </nav>
 
-    <div class="book" data-book>
+    <div class="zoom-stage" data-zoom>
 
-      <article class="leaf" data-leaf>
-        <div class="leaf__face leaf__front">
-          <div class="leaf__img" style="background-image:url('images/sample/photo3.jpg')"></div>
-          <div class="leaf__veil"></div>
-          <div class="leaf__text">
-            <span class="leaf__letter">S</span>
-            <h2 class="leaf__word">Sex</h2>
-          </div>
-          <span class="leaf__num">01 / 05</span>
+      <article class="zoom-panel zoom-panel--hero" data-panel>
+        <div class="zoom-bg" style="background-image:url('images/sample/photo1.jpg')"></div>
+        <div class="hero__veil"></div>
+        <div class="hero__content">
+          <h1 class="wordmark">S.L.O.V.O.</h1>
+          <p class="tagline">hra o slovech,<br />která jsme připravili o&nbsp;význam</p>
         </div>
-        <div class="leaf__face leaf__back"></div>
+        <div class="scrollcue" aria-hidden="true"><span>dolů</span><i></i></div>
       </article>
 
-      <article class="leaf" data-leaf>
-        <div class="leaf__face leaf__front">
-          <div class="leaf__img" style="background-image:url('images/sample/photo5.jpg')"></div>
-          <div class="leaf__veil"></div>
-          <div class="leaf__text">
-            <span class="leaf__letter">L</span>
-            <h2 class="leaf__word">Láska</h2>
-          </div>
-          <span class="leaf__num">02 / 05</span>
-        </div>
-        <div class="leaf__face leaf__back"></div>
+      <article class="zoom-panel" data-panel>
+        <div class="zoom-bg" style="background-image:url('images/sample/photo2.jpg')"></div>
       </article>
 
-      <article class="leaf" data-leaf>
-        <div class="leaf__face leaf__front leaf__front--void">
-          <div class="leaf__text leaf__text--satiation">
-            <div class="satiation" data-satiation aria-hidden="true">
-              <span>osamělost</span><span>osamělost</span><span>osamělost</span><span>osamělost</span>
-              <span>osamělost</span><span>osamělost</span><span>osamělost</span><span>osamělost</span>
-            </div>
-          </div>
-          <span class="leaf__num">03 / 05</span>
+      <article class="zoom-panel zoom-panel--prologue" data-panel data-assemble>
+        <div class="prologue__inner">
+          <p class="prologue__text">
+            <span>Slovo</span> <span>prostě</span> <span>je.</span>
+            <span>Ale</span> <span>nebylo</span> <span>tu</span> <span>vždy.</span>
+            <span>Co</span> <span>tedy</span> <span>bylo,</span>
+            <span>když</span> <span>slovo</span> <span>nebylo?</span>
+            <span class="em">Byly</span> <span class="em">smysly.</span>
+            <span>Kde</span> <span>jsou</span> <span>teď?</span>
+          </p>
+          <p class="prologue__final">Zůstala jen slova.</p>
         </div>
-        <div class="leaf__face leaf__back"></div>
       </article>
 
-      <article class="leaf" data-leaf>
-        <div class="leaf__face leaf__front">
-          <div class="leaf__img" style="background-image:url('images/sample/photo9.jpg')"></div>
-          <div class="leaf__veil"></div>
-          <div class="leaf__text">
-            <span class="leaf__letter">V</span>
-            <h2 class="leaf__word">Vina</h2>
-          </div>
-          <span class="leaf__num">04 / 05</span>
-        </div>
-        <div class="leaf__face leaf__back"></div>
+      <article class="zoom-panel" data-panel>
+        <div class="zoom-bg" style="background-image:url('images/sex.jpg')"></div>
+        <div class="zoom-veil"></div>
+        <span class="zoom-letter" style="background-image:url('images/sex.jpg')">S</span>
+        <h2 class="zoom-word">Sex</h2>
+        <span class="leaf__num">01 / 05</span>
       </article>
 
-      <article class="leaf" data-leaf>
-        <div class="leaf__face leaf__front">
-          <div class="leaf__img" style="background-image:url('images/sample/photo11.jpg')"></div>
-          <div class="leaf__veil"></div>
-          <div class="leaf__text">
-            <span class="leaf__letter">O</span>
-            <h2 class="leaf__word">Očista</h2>
-          </div>
-          <span class="leaf__num">05 / 05</span>
+      <article class="zoom-panel" data-panel>
+        <div class="zoom-bg" style="background-image:url('images/sample/photo5.jpg')"></div>
+        <div class="zoom-veil"></div>
+        <span class="zoom-letter" style="background-image:url('images/sample/photo5.jpg')">L</span>
+        <h2 class="zoom-word">Láska</h2>
+        <span class="leaf__num">02 / 05</span>
+      </article>
+
+      <article class="zoom-panel" data-panel>
+        <div class="zoom-bg" style="background-image:url('images/osamelost.jpg')"></div>
+        <div class="zoom-veil"></div>
+        <span class="zoom-letter" style="background-image:url('images/osamelost.jpg')">O</span>
+        <h2 class="zoom-word">Osamělost</h2>
+        <span class="leaf__num">03 / 05</span>
+      </article>
+
+      <article class="zoom-panel" data-panel>
+        <div class="zoom-bg" style="background-image:url('images/vina.jpg')"></div>
+        <div class="zoom-veil"></div>
+        <span class="zoom-letter" style="background-image:url('images/vina.jpg')">V</span>
+        <h2 class="zoom-word">Vina</h2>
+        <span class="leaf__num">04 / 05</span>
+      </article>
+
+      <article class="zoom-panel zoom-panel--void" data-panel>
+        <div class="zoom-veil"></div>
+        <span class="zoom-letter zoom-letter--outline">O</span>
+        <div class="satiation" data-satiation aria-hidden="true">
+          <span>očista</span><span>očista</span><span>očista</span><span>očista</span>
+          <span>očista</span><span>očista</span><span>očista</span><span>očista</span>
         </div>
-        <div class="leaf__face leaf__back"></div>
+        <span class="leaf__num">05 / 05</span>
       </article>
 
     </div>
 
-    <div class="book__hint" aria-hidden="true"><span>listujte</span><i></i></div>
+    <div class="book__hint" aria-hidden="true"><span>přibližte</span><i></i></div>
   </div>
-</section>
-
-<!-- plate -->
-<section class="plate" data-reveal>
-  <img src="images/sample/photo13.jpg" alt="" loading="lazy" />
 </section>
 
 <!-- 4 — THE PIECE -->
 <section class="piece" data-reveal>
-  <figure class="piece__photo">
-    <img src="images/sample/photo15.jpg" alt="" loading="lazy" />
-  </figure>
-  <div class="piece__col">
+  <div class="piece__bg" style="background-image:url('images/slovo.jpg')" aria-hidden="true"></div>
+  <div class="piece__veil" aria-hidden="true"></div>
+  <div class="piece__inner">
     <p class="piece__body">
       S.L.O.V.O. je hra o slovech, která jsme připravili o&nbsp;význam.
-      Pět hlasů, pět slov &mdash; <em>sex</em>, <em>láska</em>,
-      <em>osamělost</em>, <em>vina</em>, <em>očista</em> &mdash; opakovaných tak
-      dlouho, až se vyprázdní a zůstane jen zvuk.
+      Pět hlasů, pět slov.
     </p>
-    <dl class="facts">
-      <div><dt>Kdy</dt><dd>16.&nbsp;června, 19:00</dd></div>
-      <div><dt>Kde</dt><dd>Divadlo Na prádle<br />Besední 3, Praha</dd></div>
-      <div><dt>Jazyk</dt><dd>Hráno česky<br />s anglickými titulky</dd></div>
-    </dl>
   </div>
-</section>
-
-<!-- plate -->
-<section class="plate" data-reveal>
-  <img src="images/sample/photo10.jpg" alt="" loading="lazy" />
 </section>
 
 <!-- 5 — CAST & CREATORS -->
 <section class="credits" data-reveal>
-  <p class="credits__lead">Napsala a režíruje</p>
-  <p class="credits__director">Alisa Gertsovská</p>
-  <p class="credits__lead">Hrají</p>
-  <ul class="cast">
-    <li>Antonina Toregeldi</li>
-    <li>Michal Hauf</li>
-    <li>Barbora Mečířová</li>
-    <li>Jan Jašek</li>
-    <li>Anna Dyntarová</li>
-    <li>Simon Yakimov</li>
-  </ul>
+  <div class="credits__group">
+    <p class="credits__lead">Autorka a režie</p>
+    <p class="credits__director"><button type="button" class="cast__name" data-photo="images/actors/alisa.jpg">Alisa Gertsovskaya</button></p>
+  </div>
+
+  <div class="credits__group">
+    <p class="credits__lead">Hrají</p>
+    <ul class="cast">
+      <li><button type="button" class="cast__name" data-photo="images/actors/antonina.jpg">Antonina Toregeldi</button></li>
+      <li><button type="button" class="cast__name" data-photo="images/actors/michal.jpg">Michal Hauf</button></li>
+      <li><button type="button" class="cast__name" data-photo="images/actors/barbora.jpg">Barbora Mečířová</button></li>
+      <li><button type="button" class="cast__name" data-photo="images/actors/jan.jpg">Jan Jašek</button></li>
+      <li><button type="button" class="cast__name" data-photo="images/actors/anna.jpg">Anna Dyntarová</button></li>
+      <li><button type="button" class="cast__name" data-photo="images/actors/dimitriy.jpg">Dimitriy Alekhin</button></li>
+      <li><button type="button" class="cast__name" data-photo="images/actors/matous.jpg">Matouš Vyšata</button></li>
+    </ul>
+  </div>
+
+  <div class="credits__group">
+    <p class="credits__lead">Hudba</p>
+    <p class="credits__name">Simon Yakimov</p>
+  </div>
+
+  <div class="credits__group">
+    <p class="credits__lead">Umělecká spolupráce</p>
+    <p class="credits__name"><button type="button" class="cast__name" data-photo="images/actors/zuzana.jpg">Zuzana Matušková</button></p>
+  </div>
 </section>
 
 <!-- 6 — TICKETS / FOOTER -->
 <footer class="foot">
-  <div class="foot__img" style="background-image:url('images/sample/photo16.jpg')" aria-hidden="true"></div>
+  <div class="foot__slides" data-foot-slides aria-hidden="true">
+    <div class="foot__slide" style="background-image:url('images/reserve/r01.jpg')"></div>
+    <div class="foot__slide" style="background-image:url('images/reserve/r02.jpg')"></div>
+    <div class="foot__slide" style="background-image:url('images/reserve/r03.jpg')"></div>
+    <div class="foot__slide" style="background-image:url('images/reserve/r04.jpg')"></div>
+    <div class="foot__slide" style="background-image:url('images/reserve/r05.jpg')"></div>
+    <div class="foot__slide" style="background-image:url('images/reserve/r06.jpg')"></div>
+  </div>
   <div class="foot__veil" aria-hidden="true"></div>
   <div class="foot__inner">
-    <a class="tickets" href="#" aria-label="Vstupenky">
-      <span class="tickets__label">Vstupenky</span>
+    <a class="tickets" href="https://www.instagram.com/inscenace_slovo" target="_blank" rel="noopener" aria-label="Sledovat na Instagramu">
+      <span class="tickets__label">Sledovat</span>
       <span class="tickets__arrow">&rarr;</span>
     </a>
-    <div class="foot__meta">
-      <span>Divadlo Na prádle · Besední 3, Praha</span>
-      <a href="#" class="foot__ig">Instagram</a>
-    </div>
     <p class="foot__mark">S.L.O.V.O.</p>
   </div>
 </footer>
+
+<!-- actor viewer: click a name → zoom into their portrait, swipe between -->
+<div class="actor-view" data-actor-view aria-hidden="true" role="dialog" aria-modal="true" aria-label="Herci">
+  <button class="actor-view__arrow actor-view__arrow--prev" type="button" data-actor-prev aria-label="Předchozí">&lsaquo;</button>
+  <div class="actor-stage" data-actor-stage>
+    <div class="actor-stage__slides" data-actor-track></div>
+    <div class="actor-stage__count" data-actor-count></div>
+    <button class="actor-stage__close" type="button" data-actor-close aria-label="Zavřít">&times;</button>
+  </div>
+  <button class="actor-view__arrow actor-view__arrow--next" type="button" data-actor-next aria-label="Další">&rsaquo;</button>
+</div>
 
 <script src="script.js"></script>
 </body>
