@@ -29,7 +29,7 @@ function runAssemble(panel) {
 
 /* ---- scroll-driven zoom: fall through one panel into the next ---------- */
 const ZOOM_IN = 7.0;    // how hard the leaving panel rushes toward the viewer
-const ZOOM_FROM = 0.2;  // arriving panel eases from slightly-larger down to 1 (stays full-screen)
+const ZOOM_FROM = 0.2;  // arriving panel zooms IN from a bit smaller up to 1
 const FADE_IN = 0.5;    // arriving panel reaches full opacity within this much of centre
 
 function initZoom(wrap) {
@@ -71,7 +71,7 @@ function initZoom(wrap) {
       // leaving panel zooms toward viewer + fades; arriving stays full-screen,
       // easing from slightly-larger down to 1 (full-screen → no black borders)
       if (local >= 0) { scale = 1 + local * ZOOM_IN; opacity = 1 - local * 1.4; }
-      else { scale = 1 - local * ZOOM_FROM; opacity = (local + 1) / FADE_IN; }
+      else { scale = 1 + local * ZOOM_FROM; opacity = (local + 1) / FADE_IN; }
       panel.style.transform = `scale(${scale.toFixed(3)})`;
       panel.style.opacity = clamp(opacity, 0, 1).toFixed(3);
       panel.style.zIndex = i <= k ? 200 + i : 100 - i;
