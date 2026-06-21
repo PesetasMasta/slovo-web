@@ -10,7 +10,7 @@
   --paper-faint:#54514c;   /* faintest detail */
   --rule:       rgba(236, 232, 225, 0.14);
 
-  --serif: "Bodoni Moda", Georgia, serif;
+  --serif: "Playfair Display", Georgia, serif;
   --sans:  "Hanken Grotesk", system-ui, sans-serif;
 
   --gutter: clamp(1.25rem, 5vw, 6rem);
@@ -223,6 +223,7 @@ img { display: block; width: 100%; height: 100%; object-fit: cover;
   font-family: var(--serif); font-size: clamp(1.6rem, 4vw, 2.8rem); line-height: 1.4;
   text-shadow: 0 2px 40px rgba(0, 0, 0, .75);
 }
+.piece__body + .piece__body { margin-top: clamp(.7rem, 2.4vh, 1.4rem); }
 .piece__body em { font-style: italic; }
 
 /* ===========================================================
@@ -266,6 +267,13 @@ img { display: block; width: 100%; height: 100%; object-fit: cover;
    6 — FOOTER / TICKETS
    =========================================================== */
 .zoom-panel--foot { text-align: center; }
+.signature {
+  position: absolute; left: 50%; bottom: clamp(1rem, 3vh, 2rem); transform: translateX(-50%);
+  z-index: 3; white-space: nowrap;
+  font-family: var(--sans); font-size: .66rem; letter-spacing: .22em; text-transform: uppercase;
+  color: var(--paper-dim); text-decoration: none; transition: color .3s ease;
+}
+.signature:hover { color: var(--paper); }
 .foot__slides { position: absolute; inset: 0; }
 .foot__slide {
   position: absolute; inset: 0; background-size: cover; background-position: 50% 35%;
