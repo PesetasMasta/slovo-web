@@ -29,14 +29,15 @@ function runAssemble(panel) {
 
 /* ---- scroll-driven zoom: fall through one panel into the next ---------- */
 const ZOOM_IN = 7.0;    // how hard the leaving panel rushes toward the viewer
-const ZOOM_FROM = 0.45; // how small the arriving panel starts (zoomed inside)
-const FADE_IN = 0.45;   // arriving panel reaches full opacity within this much of centre
+const ZOOM_FROM = 0;    // arriving panel stays full-screen (only the leaving one zooms)
+const FADE_IN = 0.5;    // arriving panel reaches full opacity within this much of centre
 
 function initZoom(wrap) {
   const stage = wrap.querySelector("[data-zoom]");
   if (!stage || reduceMotion) return;
 
   const panels = [...stage.querySelectorAll("[data-panel]")];
+  const acronymNav = wrap.querySelector(".acronym");
   const letters = [...wrap.querySelectorAll(".acronym [data-letter]")];
   const satiation = stage.querySelector("[data-satiation]");
   const satiationPanel = panels.findIndex((p) => satiation && p.contains(satiation));
@@ -79,6 +80,8 @@ function initZoom(wrap) {
     const activePanel = panels[active];
     const ai = activePanel ? activePanel.dataset.acronym : undefined; // which letter, if any
     letters.forEach((l, i) => l.classList.toggle("on", String(i) === ai));
+    // hide the acronym navigator on the hero (panel 0); fade it in from page two
+    if (acronymNav) acronymNav.style.opacity = clamp((progress - 0.45) / 0.45, 0, 1).toFixed(2);
     if (satiation) satiation.classList.toggle("go", active === satiationPanel);
     if (activePanel && "assemble" in activePanel.dataset) runAssemble(activePanel);
   }
