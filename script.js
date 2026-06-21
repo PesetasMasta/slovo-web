@@ -23,8 +23,8 @@ function runAssemble(panel) {
   if (panel.dataset.assembled) return;
   panel.dataset.assembled = "1";
   const words = [...panel.querySelectorAll(".prologue__text span")];
-  words.forEach((w, i) => setTimeout(() => w.classList.add("lit"), i * 120));
-  setTimeout(() => panel.classList.add("done"), words.length * 120 + 500);
+  words.forEach((w, i) => setTimeout(() => w.classList.add("lit"), i * 130));
+  setTimeout(() => panel.classList.add("done"), words.length * 130 + 600);
 }
 
 /* ---- scroll-driven zoom: fall through one panel into the next ---------- */
@@ -67,7 +67,8 @@ function initZoom(wrap) {
     panels.forEach((panel, i) => {
       const local = progress - i;
       let scale, opacity;
-      if (local >= 0) { scale = 1 + local * ZOOM_IN; opacity = 1 - local; }
+      // leaving panels fade ~1.4x faster so they don't smear over the next frame
+      if (local >= 0) { scale = 1 + local * ZOOM_IN; opacity = 1 - local * 1.4; }
       else { scale = 1 + local * ZOOM_FROM; opacity = (local + 1) / FADE_IN; }
       panel.style.transform = `scale(${scale.toFixed(3)})`;
       panel.style.opacity = clamp(opacity, 0, 1).toFixed(3);
@@ -91,6 +92,7 @@ function initZoom(wrap) {
     render(progressAt(u));
     ticking = false;
   }
+
   function onScroll() {
     if (!ticking) { ticking = true; requestAnimationFrame(update); }
   }
@@ -118,7 +120,7 @@ if (castNames.length && actorView) {
   track.innerHTML = actors
     .map((a) => a.photo
       ? `<div class="actor-slide">
-           <div class="actor-slide__img" style="background-image:url('${a.photo}')"></div>
+           <div class="actor-slide__img" data-bg="${a.photo}"></div>
            <div class="actor-slide__veil"></div>
            <p class="actor-slide__name">${a.name}</p>
          </div>`
@@ -129,9 +131,19 @@ if (castNames.length && actorView) {
     .join("");
   const slides = [...track.querySelectorAll(".actor-slide")];
 
+  // lazy-load each portrait the first time it's needed; browser caches it afterwards
+  function ensureBg(i) {
+    const img = slides[(i + N) % N].querySelector(".actor-slide__img");
+    if (img && img.dataset.bg) {
+      img.style.backgroundImage = `url('${img.dataset.bg}')`;
+      img.removeAttribute("data-bg");
+    }
+  }
+
   // cross-fade: only the active slide is shown (no track, no neighbour peek)
   function setIndex(i) {
     index = (i + N) % N; // wrap around
+    ensureBg(index); ensureBg(index + 1); ensureBg(index - 1); // current + neighbours
     slides.forEach((s, k) => s.classList.toggle("on", k === index));
     countEl.textContent =
       String(index + 1).padStart(2, "0") + " / " + String(N).padStart(2, "0");
@@ -139,22 +151,11 @@ if (castNames.length && actorView) {
 
   function open(i, btn) {
     opener = btn || null;
-    // zoom the stage in from the clicked name's position
-    const cx = window.innerWidth / 2, cy = window.innerHeight / 2;
-    if (btn && !reduceMotion) {
-      const r = btn.getBoundingClientRect();
-      stage.style.setProperty("--fx", (r.left + r.width / 2 - cx) + "px");
-      stage.style.setProperty("--fy", (r.top + r.height / 2 - cy) + "px");
-    } else {
-      stage.style.setProperty("--fx", "0px");
-      stage.style.setProperty("--fy", "0px");
-    }
-    stage.style.transform = "";          // use the CSS start state (reads --fx/--fy)
+    stage.style.transform = "";
     setIndex(i);
     document.body.classList.add("modal-open");
     actorView.setAttribute("aria-hidden", "false");
-    void stage.offsetWidth;              // commit the from-name start state...
-    actorView.classList.add("open");     // ...then zoom in
+    actorView.classList.add("open");     // fades in (no zoom)
   }
 
   function close() {
@@ -181,7 +182,7 @@ if (castNames.length && actorView) {
     else if (e.key === "ArrowRight") setIndex(index + 1);
   });
 
-  // pointer drag on the stage: horizontal = cross-fade to next/prev, down = close
+  // pointer drag on the stage: horizontal = cross-fade to next/prev, swipe UP = close
   let sx = 0, sy = 0, dx = 0, dy = 0, dragging = false, axis = null;
   stage.addEventListener("pointerdown", (e) => {
     dragging = true; axis = null; sx = e.clientX; sy = e.clientY; dx = dy = 0;
@@ -191,15 +192,15 @@ if (castNames.length && actorView) {
     if (!dragging) return;
     dx = e.clientX - sx; dy = e.clientY - sy;
     if (axis === null && (Math.abs(dx) > 8 || Math.abs(dy) > 8)) axis = Math.abs(dx) > Math.abs(dy) ? "x" : "y";
-    // light feedback only (the actual switch is a cross-fade, not a slide)
+    // light feedback only (switching is a cross-fade, not a slide)
     if (axis === "x") stage.style.transform = `translateX(${(dx * 0.25).toFixed(1)}px)`;
-    else if (axis === "y" && dy > 0) stage.style.transform = `translateY(${(dy * 0.5).toFixed(1)}px) scale(${(1 - Math.min(dy / 1000, 0.1)).toFixed(3)})`;
+    else if (axis === "y" && dy < 0) stage.style.transform = `translateY(${(dy * 0.5).toFixed(1)}px) scale(${(1 - Math.min(-dy / 1000, 0.1)).toFixed(3)})`;
   });
   function endDrag() {
     if (!dragging) return;
     dragging = false;
-    if (axis === "y" && dy > 110) { close(); return; }
-    stage.style.transform = "";          // reset feedback (CSS keeps it at scale 1)
+    if (axis === "y" && dy < -110) { close(); return; }   // swipe up to close
+    stage.style.transform = "";
     if (axis === "x" && Math.abs(dx) > 60) setIndex(index + (dx < 0 ? 1 : -1));
   }
   stage.addEventListener("pointerup", endDrag);

@@ -71,17 +71,12 @@ img { display: block; width: 100%; height: 100%; object-fit: cover;
 @keyframes rise { from { opacity: 0; transform: translateY(1.4rem); } }
 
 .scrollcue {
-  position: absolute; left: var(--gutter); bottom: clamp(1.5rem, 4vh, 3rem);
-  z-index: 2; display: flex; align-items: center; gap: .8rem;
-  font-size: .7rem; letter-spacing: .35em; text-transform: uppercase;
-  color: var(--paper-dim); animation: fadein 2s ease 1s both;
+  position: absolute; left: 50%; transform: translateX(-50%); bottom: clamp(1.5rem, 4vh, 3rem);
+  z-index: 2; color: var(--paper-dim); line-height: 1; font-size: 1.7rem;
+  animation: fadein 2s ease 1s both;
 }
-.scrollcue i { width: 3rem; height: 1px; background: var(--paper-dim); position: relative; overflow: hidden; }
-.scrollcue i::after {
-  content: ""; position: absolute; inset: 0; width: 40%; background: var(--paper);
-  animation: sweep 2.6s ease-in-out infinite;
-}
-@keyframes sweep { 0%{transform:translateX(-120%)} 60%,100%{transform:translateX(320%)} }
+.scrollcue span { display: block; animation: bob 1.9s ease-in-out 1.2s infinite; }
+@keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(.45rem); } }
 @keyframes fadein { from { opacity: 0; } }
 
 /* ===========================================================
@@ -130,14 +125,14 @@ img { display: block; width: 100%; height: 100%; object-fit: cover;
   display: flex; justify-content: center; align-items: baseline; gap: .15em;
   font-family: var(--serif); font-weight: 500;
   font-size: clamp(.9rem, 2.4vw, 1.3rem); letter-spacing: .18em;
-  pointer-events: none; mix-blend-mode: difference; color: #fff;
+  pointer-events: none; color: var(--paper); text-shadow: 0 1px 14px rgba(0,0,0,.75);
 }
-.acronym span { opacity: .32; transition: opacity .5s ease, transform .5s ease; transform: translateY(0); }
+.acronym span { opacity: .4; transition: opacity .5s ease, transform .5s ease; transform: translateY(0); }
 .acronym i { opacity: .22; font-style: normal; }
 .acronym span.on { opacity: 1; }
 
 /* the zoom stack — panels scaled + faded by scroll */
-.zoom-stage { position: absolute; inset: 0; }
+.zoom-stage { position: absolute; inset: 0; z-index: 1; } /* contains panel z-indexes so the acronym stays visible */
 .zoom-panel {
   position: absolute; inset: 0; opacity: 0;
   display: flex; align-items: center; justify-content: center;
@@ -274,11 +269,10 @@ img { display: block; width: 100%; height: 100%; object-fit: cover;
 .foot__slides { position: absolute; inset: 0; }
 .foot__slide {
   position: absolute; inset: 0; background-size: cover; background-position: 50% 35%;
-  filter: grayscale(1) contrast(1.05); transform: scale(1.16);
-  opacity: 0; transition: opacity 1.8s ease;
+  filter: grayscale(1) contrast(1.05);
+  opacity: 0; transition: opacity 2s ease;
 }
-.foot__slide.on { opacity: 1; animation: footzoom 9s ease-out forwards; }
-@keyframes footzoom { from { transform: scale(1.16); } to { transform: scale(1); } }
+.foot__slide.on { opacity: 1; }
 .foot__veil {
   position: absolute; inset: 0;
   background: linear-gradient(180deg, rgba(10,9,8,.82) 0%, rgba(10,9,8,.6) 45%, rgba(10,9,8,.92) 100%);
@@ -305,11 +299,6 @@ img { display: block; width: 100%; height: 100%; object-fit: cover;
 }
 .foot__ig { color: var(--paper); text-decoration: none; border-bottom: 1px solid var(--rule); padding-bottom: 2px; }
 .foot__ig:hover { border-color: var(--paper); }
-.foot__mark {
-  font-family: var(--serif); font-weight: 500;
-  font-size: clamp(2.5rem, 13vw, 9rem); letter-spacing: .02em;
-  color: var(--paper-faint); opacity: .28; line-height: 1;
-}
 
 /* ===========================================================
    reveal-on-scroll
@@ -364,10 +353,9 @@ body.modal-open { overflow: hidden; }
   width: min(96vw, 52rem); height: 94svh;
   border-radius: clamp(.7rem, 1.8vw, 1.3rem); overflow: hidden;
   background: #141210; touch-action: none;
-  opacity: 0; transform: translate(var(--fx, 0), var(--fy, 0)) scale(.18);
-  transition: transform .7s cubic-bezier(.2, .7, .2, 1), opacity .55s ease;
+  opacity: 0; transition: opacity .5s ease;
 }
-.actor-view.open .actor-stage { opacity: 1; transform: translate(0, 0) scale(1); }
+.actor-view.open .actor-stage { opacity: 1; }
 .actor-stage__slides { position: absolute; inset: 0; }
 
 /* slides stack and cross-fade — no horizontal track, so no neighbour peeks */
@@ -383,9 +371,8 @@ body.modal-open { overflow: hidden; }
 }
 .actor-slide__img {
   position: absolute; inset: 0; background-size: cover; background-position: 50% 20%;
-  filter: grayscale(1) contrast(1.05); transform: scale(1.07);
+  filter: grayscale(1) contrast(1.05);
 }
-.actor-slide.on .actor-slide__img { transform: scale(1); transition: transform 9s ease-out; }
 .actor-slide__veil {
   position: absolute; inset: 0;
   background: linear-gradient(180deg, rgba(10,9,8,.05) 42%, rgba(10,9,8,.86) 100%);
@@ -398,14 +385,24 @@ body.modal-open { overflow: hidden; }
   text-shadow: 0 2px 36px rgba(0, 0, 0, .8);
 }
 
-.actor-stage__close {
-  position: absolute; top: .8rem; right: .9rem; z-index: 4;
-  width: 2.4rem; height: 2.4rem; border-radius: 50%; border: 0; cursor: pointer;
-  background: rgba(0, 0, 0, .4); color: var(--paper); font-size: 1.5rem; line-height: 1;
-  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
-  transition: background .3s ease;
+/* bottom "rollet" handle — a pill that becomes × on hover */
+.actor-stage__handle {
+  position: absolute; bottom: clamp(.8rem, 2.2vh, 1.6rem); left: 50%; transform: translateX(-50%);
+  z-index: 4; border: 0; background: none; cursor: pointer; padding: .8rem 1.2rem;
+  display: flex; align-items: center; justify-content: center;
 }
-.actor-stage__close:hover { background: rgba(0, 0, 0, .65); }
+.actor-stage__bar {
+  display: block; width: 2.8rem; height: 4px; border-radius: 99px;
+  background: rgba(236, 232, 225, .65); transition: opacity .25s ease;
+}
+.actor-stage__x {
+  position: absolute; color: var(--paper); font-size: 1.7rem; line-height: 1;
+  opacity: 0; transition: opacity .25s ease; text-shadow: 0 1px 8px rgba(0,0,0,.6);
+}
+.actor-stage__handle:hover .actor-stage__bar,
+.actor-stage__handle:focus-visible .actor-stage__bar { opacity: 0; }
+.actor-stage__handle:hover .actor-stage__x,
+.actor-stage__handle:focus-visible .actor-stage__x { opacity: 1; }
 .actor-stage__count {
   position: absolute; top: 1.15rem; left: 1.2rem; z-index: 4;
   font-family: var(--sans); font-size: .66rem; letter-spacing: .28em; color: var(--paper);

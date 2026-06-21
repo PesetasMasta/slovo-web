@@ -1,116 +1,97 @@
 # S.L.O.V.O. — Production Site Design
 
-**Date:** 2026-06-20
-**Status:** Approved (design), mockups pending review
+**Date:** 2026-06-20 (spec resynced 2026-06-21 to the shipped build)
+**Status:** Built; in bug-fixing / polish.
 
 ## Purpose
 
 A standing online presentation for the alternative theatre production **S.L.O.V.O.**
-(*"a play of words we've robbed of meaning"*), written and directed by Alisa
-Gertsovskaya. The site exists to say "this piece exists — come experience it,"
-with a ticket link present but not the central purpose. Blend of promotion (A)
-and artistic portfolio/presentation (C).
+by Alisa Gertsovskaya. It exists to say "this piece exists — experience it." The
+theme is the emptiness of words and the gradual loss of their meaning; the site
+should make a visitor *feel* that. No further performances are currently planned,
+so it reads as an artistic record (no dates/tickets).
 
-The production's theme is the emptiness of words and the gradual loss of their
-meaning. The site should make a visitor *feel* that idea, quietly, without
-sacrificing readability or the photography.
+## Audience & language
 
-## Audience
-
-Prague theatre-goers, festival/press, and the creators' own circle. **Czech-only**
-text (the original language of the piece). English was tried during mockup and felt
-like noise against the photography; a language toggle (EN, others) may be added
-later but is out of scope for v1.
+Prague theatre-goers, festival/press, the creators' circle. **Czech-only** text.
 
 ## Aesthetic
 
-- Single slow vertical scroll, like reading a poem / watching the play unfold.
-  The scroll *is* the dramaturgy.
-- **Photography leads.** Photos are standalone, full-bleed content in every
-  section — not decoration. Full-screen photo "plates" sit between the text
-  sections; the piece and footer are built around images too.
-- Black background, white type, full-bleed black-and-white photography.
-- No nav bar, no menu, no clutter. Black space used as a material, not a flaw.
-- Type: high-contrast serif for the large words (echoing the "S.L.O.V.O." poster
-  lettering); plain sans for body and credits.
-- Restraint level **B (quietly expressive)**: mostly calm and legible, with two
-  earned conceptual moments.
+Near-black ground (`--ink #0a0908`), warm off-white type (`--paper #ece8e1`),
+full-bleed black-and-white photography. Display: **Bodoni Moda** (high-contrast
+didone, echoes the poster). Body/labels: **Hanken Grotesk**. Film-grain overlay.
+Scrollbar hidden. No nav/menu.
 
-## Source material
+## The spine: the acronym
 
-- **The acronym is the spine.** S.L.O.V.O. (Czech for "word") is itself built from
-  five words: **S**ex · **L**áska · **O**samělost · **V**ina · **O**čista
-  (sex · love · loneliness · guilt · catharsis). The word is made of words. The
-  five-word core is presented as a **page-turning "book"** (see Interaction).
-- **Script** (Czech `Slovo - scénář` and English `The Word`). The play's prologue
-  splits one thought word-by-word across five characters. Used for the Prologue
-  assembly moment. Per-chapter script quotes were tried and **dropped** — the
-  words alone, with photography, carry the book.
-  - Prologue fragment: *"Slovo prostě je. Ale nebylo tu vždy. Co tedy bylo, když
-    slovo nebylo? Byly smysly. Kde jsou teď? Zůstala jen slova."* /
-    *"The word just is. But it hadn't always been there. What existed before
-    words? There were meanings. Where are they now? Only words are left."*
-  - Characters: Chtivý muž, Krásná žena, Nezkušený mladík, Čistá holčička,
-    Tvor bezpohlavní a bezejmenný.
-- **Photos:** ~115 polished B&W shots in `fotky/IG post` (+ ~280 more). Mostly
-  portrait. Curated subset prepared web-sized into `images/`.
+**S.L.O.V.O.** (Czech for "word") is built from five words:
+**S**ex · **L**áska · **O**samělost · **V**ina · **O**čista
+(sex · love · loneliness · guilt · catharsis). The word is made of words.
 
-## Page structure (top to bottom)
+## Architecture: the whole page is ONE continuous scroll-zoom
 
-1. **Opening** — full screen. Eyes photo (poster image), "S.L.O.V.O.", tagline
-   *"a play of words we've robbed of meaning."* Faint scroll cue.
-2. **Prologue** — the word-by-word fragment assembling as you scroll. First place
-   the concept bites.
-3. **The book** — the five words as a page-turning sequence (S·L·O·V·O). Each page:
-   full-bleed photo + the word + its highlighted letter. An acronym indicator at
-   the top tracks which letter/word is active. No script quotes.
-4. **The piece** — 2–3 sentences on what it is (CZ + EN). Date, venue, "in Czech
-   with English subtitles."
-5. **Cast & creators** — Alisa Gertsovskaya (written & directed) and the six
-   performers (Antonina Toregeldi, Michal Hauf, Barbora Mečířova, Jan Jašek,
-   Anna Dyntarová, Simon Yakimov). Quiet, typographic.
-6. **Tickets / footer** — booking link (from the poster QR), venue address
-   (Divadlo Na prádle, Besední 3, Prague), Instagram link. Minimal.
+A single pinned section (`.zoom-wrap` → sticky `.zoom-pin` → `.zoom-stage`) holds
+**11 full-screen panels** (`.zoom-panel`). Scrolling drives a zoom-through: the
+current panel rushes toward the viewer and fades while the next emerges. Engine in
+`script.js` `initZoom()` (runs for every `[data-zoom-wrap]`; currently one).
 
-## Interaction: the book (listování)
+Panel order:
+1. **Hero** — eyes/portrait photo, "S.L.O.V.O.", tagline, bobbing ↓ cue
+2. **Opening photo** — full-bleed
+3. **Prologue** — "Slovo prostě je… Zůstala jen slova." assembles word-by-word
+4–8. **The five words** — Sex / Láska / Osamělost / Vina / Očista. Each: photo +
+   giant photo-filled first letter + the word. **Očista** is a black screen where
+   the word repeats and dissolves (*semantic satiation*).
+9. **Slovo o slově** — dimmed full-bleed photo + 2-sentence blurb
+10. **Herci** — credits (clickable cast names → portrait viewer)
+11. **Sledovat** — cross-fading photo backdrop + Instagram button
 
-The five-word core is a page-turning book embedded in the scrolling page:
+### Zoom engine details
+- Scroll → `u` over a timeline of unit-length transitions. A panel's
+  `data-dwell="x"` adds `x` units where it stays centred (used on Herci & Sledovat
+  so their interactive content is easy to land on).
+- Leaving panels fade ~1.4× faster than they zoom, to limit ghosting/smear.
+- **Snap-on-stop:** when scrolling stops (~170 ms idle), it smoothly settles onto
+  the nearest panel so you never rest mid-zoom.
+- Acronym indicator (top) lights the active letter via per-panel `data-acronym`.
+- Respects `prefers-reduced-motion`: panels fall back to a static vertical stack.
 
-- **Desktop:** the book section is pinned (sticky) while scrolling drives a gradual
-  3D page rotation — one full-bleed page turns around its left spine to reveal the
-  next. Scroll = leafing through.
-- **Mobile:** same scroll/swipe-driven turn (touch-scroll flips the pages). A true
-  discrete swipe-snap gesture can be added later if wanted.
-- An acronym indicator (S·L·O·V·O) at the top highlights the active letter/word.
+## Cast viewer (Herci)
 
-## Expressive moments
+Click a name → full-screen portrait that **fades in** (no zoom), with a gentle
+**cross-fade** between people (swipe / arrows / arrow-keys, wraps around). **Swipe
+up** (or Esc, or the bottom rollet handle — a pill that becomes × on hover, or
+click outside) closes. Portraits lazy-load on demand and are browser-cached.
+People with portraits: Alisa (režie), the 7 performers, Zuzana (umělecká
+spolupráce). Missing portraits show a "portrét připravujeme" card.
 
-1. **Prologue assembly** — words fade in one at a time on scroll; the sentence
-   comes together, then the closing line *"Zůstala jen slova"* lingers as the rest
-   dims. Meaning arriving, then thinning out.
-2. **The emptied word** — on the **OSAMĚLOST** page, the word repeats and softly
-   blurs/fades apart until illegible — *semantic satiation*. Used once.
+## Credits (Czech)
 
-All motion respects `prefers-reduced-motion`: the book falls back to a static
-vertical stack of full-screen pages; assembly/satiation/reveals render static.
+- **Autorka a režie** — Alisa Gertsovskaya
+- **Hrají** — Antonina Toregeldi · Michal Hauf · Barbora Mečířová · Jan Jašek ·
+  Anna Dyntarová · Dimitriy Alekhin · Matouš Vyšata
+- **Hudba** — Simon Yakimov
+- **Umělecká spolupráce** — Zuzana Matušková
+
+Date & venue intentionally omitted (no further shows). Footer CTA: **Sledovat** →
+instagram.com/inscenace_slovo.
+
+## Photos
+
+Pool in iCloud `Documents/Slovo/fotky/` (IG post 115 + IG story + 25-11-07_rep).
+Cast via a numbered contact sheet; `images/_contact-manifest.tsv` maps numbers →
+originals. Web-sized files live in `images/` (`sex/osamelost/vina/slovo.jpg`,
+`actors/*`, `reserve/*` for the footer cross-fade). Dimitriy's photo pulled from
+Instagram (og:image). **Most performer portraits are still placeholder scene
+crops — real headshots needed.**
 
 ## Tech
 
-- Single static page: `index.html` + one CSS file + minimal vanilla JS
-  (IntersectionObserver / scroll for the two moments). No framework, no build step.
-- Works opened directly from disk and when served.
-- Git repo prepared for **GitHub Pages** hosting.
-- Photos in `images/`; large/HEIC originals converted to web-sized JPG/WebP for
-  speed.
+Single static page: `index.html` + `styles.css` + vanilla `script.js`, no build,
+no dependencies. Works from disk or served. Destined for GitHub Pages.
 
-## Out of scope (YAGNI)
+## Out of scope / pending
 
-- CMS / admin, multi-page routing, full CS/EN toggle (Czech is woven in, not a
-  parallel translation), e-commerce (ticketing is an external link), analytics.
-
-## Open items
-
-- Real booking URL and Instagram handle (placeholders until provided).
-- Final photo selection and per-chapter assignment.
-- Exact English production blurb (2–3 sentences) — draft from script, confirm
-  with creators.
+- Real per-actor headshots; possible per-member Instagram links.
+- Language toggle (Czech-only for now).
+- GitHub Pages deploy.
