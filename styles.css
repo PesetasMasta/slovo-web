@@ -118,7 +118,7 @@ img { display: block; width: 100%; height: 100%; object-fit: cover;
 /* ===========================================================
    3 — THE WORDS  (zoom through each word's first letter)
    =========================================================== */
-.zoom-wrap { position: relative; height: 620vh; }
+.zoom-wrap { position: relative; height: 900vh; }
 .zoom-pin {
   position: sticky; top: 0; height: 100svh; overflow: hidden;
   background: var(--ink);
@@ -218,24 +218,12 @@ img { display: block; width: 100%; height: 100%; object-fit: cover;
 /* ===========================================================
    4 — THE PIECE
    =========================================================== */
-.piece {
-  position: relative; overflow: hidden;
-  min-height: 100svh; display: flex; align-items: center; justify-content: center;
-  padding: clamp(4rem, 12vh, 9rem) var(--gutter);
-  border-top: 1px solid var(--rule);
-}
-.piece__bg {
-  position: absolute; inset: 0; background-size: cover; background-position: 50% 38%;
-  filter: grayscale(1) contrast(1.05);
-  opacity: 0; transform: scale(1.14);
-  transition: opacity 1.8s ease, transform 2.6s cubic-bezier(.2, .7, .2, 1);
-}
-.piece.in .piece__bg { opacity: 1; transform: scale(1); }
+.zoom-panel--piece { background: var(--ink); }
 .piece__veil {
   position: absolute; inset: 0;
   background: radial-gradient(125% 95% at 50% 45%, rgba(10,9,8,.66) 0%, rgba(10,9,8,.92) 100%);
 }
-.piece__inner { position: relative; z-index: 2; max-width: 42rem; text-align: center; }
+.piece__inner { position: relative; z-index: 2; max-width: 42rem; padding: 0 var(--gutter); text-align: center; }
 .piece__body {
   font-family: var(--serif); font-size: clamp(1.6rem, 4vw, 2.8rem); line-height: 1.4;
   text-shadow: 0 2px 40px rgba(0, 0, 0, .75);
@@ -245,25 +233,23 @@ img { display: block; width: 100%; height: 100%; object-fit: cover;
 /* ===========================================================
    5 — CREDITS
    =========================================================== */
-.credits {
-  padding: clamp(6rem, 16vh, 14rem) var(--gutter);
-  border-top: 1px solid var(--rule); text-align: center;
-}
-.credits__group + .credits__group { margin-top: clamp(2.6rem, 7vh, 5rem); }
+.zoom-panel--credits { background: var(--ink); }
+.credits__inner { max-width: 62rem; padding: var(--gutter); text-align: center; }
+.credits__group + .credits__group { margin-top: clamp(1.5rem, 4.2vh, 2.8rem); }
 .credits__lead {
-  font-size: .74rem; letter-spacing: .34em; text-transform: uppercase;
-  color: var(--paper-faint); margin-bottom: 1rem;
+  font-size: .72rem; letter-spacing: .34em; text-transform: uppercase;
+  color: var(--paper-faint); margin-bottom: .7rem;
 }
 .credits__director {
-  font-family: var(--serif); font-size: clamp(2rem, 7vw, 4.5rem); font-weight: 500;
+  font-family: var(--serif); font-size: clamp(1.8rem, 6vw, 3.4rem); font-weight: 500;
 }
 .credits__name {
-  font-family: var(--serif); font-weight: 500; font-size: clamp(1.4rem, 4.5vw, 2.4rem);
+  font-family: var(--serif); font-weight: 500; font-size: clamp(1.3rem, 4vw, 2.1rem);
 }
 .cast {
   list-style: none; display: flex; flex-wrap: wrap; justify-content: center;
-  gap: .6rem clamp(1.5rem, 4vw, 3.5rem);
-  font-family: var(--serif); font-size: clamp(1.2rem, 3.5vw, 2rem);
+  gap: .5rem clamp(1.4rem, 3.6vw, 3rem);
+  font-family: var(--serif); font-size: clamp(1.05rem, 3.2vw, 1.7rem);
 }
 .cast li { position: relative; }
 .cast li + li::before {
@@ -284,15 +270,7 @@ img { display: block; width: 100%; height: 100%; object-fit: cover;
 /* ===========================================================
    6 — FOOTER / TICKETS
    =========================================================== */
-.foot {
-  position: relative; overflow: hidden;
-  padding: clamp(7rem, 20vh, 16rem) var(--gutter) clamp(3rem, 8vh, 5rem);
-  border-top: 1px solid var(--rule); text-align: center;
-}
-.foot__img {
-  position: absolute; inset: 0; background-size: cover; background-position: 50% 35%;
-  filter: grayscale(1) contrast(1.05); transform: scale(1.05);
-}
+.zoom-panel--foot { text-align: center; }
 .foot__slides { position: absolute; inset: 0; }
 .foot__slide {
   position: absolute; inset: 0; background-size: cover; background-position: 50% 35%;
@@ -305,7 +283,11 @@ img { display: block; width: 100%; height: 100%; object-fit: cover;
   position: absolute; inset: 0;
   background: linear-gradient(180deg, rgba(10,9,8,.82) 0%, rgba(10,9,8,.6) 45%, rgba(10,9,8,.92) 100%);
 }
-.foot__inner { position: relative; z-index: 2; }
+.foot__inner {
+  position: relative; z-index: 2;
+  display: flex; flex-direction: column; align-items: center;
+  gap: clamp(2.5rem, 9vh, 5rem);
+}
 .tickets {
   display: inline-flex; align-items: center; gap: 1rem;
   text-decoration: none; color: var(--ink); background: var(--paper);
@@ -324,10 +306,9 @@ img { display: block; width: 100%; height: 100%; object-fit: cover;
 .foot__ig { color: var(--paper); text-decoration: none; border-bottom: 1px solid var(--rule); padding-bottom: 2px; }
 .foot__ig:hover { border-color: var(--paper); }
 .foot__mark {
-  margin-top: clamp(4rem, 12vh, 8rem);
   font-family: var(--serif); font-weight: 500;
-  font-size: clamp(2.5rem, 14vw, 11rem); letter-spacing: .02em;
-  color: var(--paper-faint); opacity: .25; line-height: 1;
+  font-size: clamp(2.5rem, 13vw, 9rem); letter-spacing: .02em;
+  color: var(--paper-faint); opacity: .28; line-height: 1;
 }
 
 /* ===========================================================
@@ -338,7 +319,7 @@ img { display: block; width: 100%; height: 100%; object-fit: cover;
 
 /* ---- responsive ----------------------------------------- */
 @media (max-width: 720px) {
-  .zoom-wrap { height: 540vh; }
+  .zoom-wrap { height: 780vh; }
   .zoom-letter { font-size: 64vh; }
 }
 

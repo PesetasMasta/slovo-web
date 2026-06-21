@@ -38,7 +38,6 @@ function initZoom(wrap) {
 
   const panels = [...stage.querySelectorAll("[data-panel]")];
   const letters = [...wrap.querySelectorAll(".acronym [data-letter]")];
-  const letterOffset = panels.length - letters.length; // letters track the LAST panels
   const satiation = stage.querySelector("[data-satiation]");
   const satiationPanel = panels.findIndex((p) => satiation && p.contains(satiation));
   const N = panels.length;
@@ -76,9 +75,10 @@ function initZoom(wrap) {
       panel.style.visibility = Math.abs(local) > 1.05 ? "hidden" : "visible";
     });
     const active = clamp(Math.round(progress), 0, N - 1);
-    letters.forEach((l, i) => l.classList.toggle("on", i === active - letterOffset));
-    if (satiation) satiation.classList.toggle("go", active === satiationPanel);
     const activePanel = panels[active];
+    const ai = activePanel ? activePanel.dataset.acronym : undefined; // which letter, if any
+    letters.forEach((l, i) => l.classList.toggle("on", String(i) === ai));
+    if (satiation) satiation.classList.toggle("go", active === satiationPanel);
     if (activePanel && "assemble" in activePanel.dataset) runAssemble(activePanel);
   }
 
