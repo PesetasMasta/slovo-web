@@ -10,7 +10,7 @@
   --paper-faint:#54514c;   /* faintest detail */
   --rule:       rgba(236, 232, 225, 0.14);
 
-  --serif: "Playfair Display", Georgia, serif;
+  --serif: "Cormorant", Georgia, serif;
   --sans:  "Hanken Grotesk", system-ui, sans-serif;
 
   --gutter: clamp(1.25rem, 5vw, 6rem);
