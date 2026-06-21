@@ -29,7 +29,7 @@ function runAssemble(panel) {
 
 /* ---- scroll-driven zoom: fall through one panel into the next ---------- */
 const ZOOM_IN = 7.0;    // how hard the leaving panel rushes toward the viewer
-const ZOOM_FROM = 0;    // arriving panel stays full-screen (only the leaving one zooms)
+const ZOOM_FROM = 0.2;  // arriving panel eases from slightly-larger down to 1 (stays full-screen)
 const FADE_IN = 0.5;    // arriving panel reaches full opacity within this much of centre
 
 function initZoom(wrap) {
@@ -68,13 +68,16 @@ function initZoom(wrap) {
     panels.forEach((panel, i) => {
       const local = progress - i;
       let scale, opacity;
-      // leaving panels fade ~1.4x faster so they don't smear over the next frame
+      // leaving panel zooms toward viewer + fades; arriving stays full-screen,
+      // easing from slightly-larger down to 1 (full-screen → no black borders)
       if (local >= 0) { scale = 1 + local * ZOOM_IN; opacity = 1 - local * 1.4; }
-      else { scale = 1 + local * ZOOM_FROM; opacity = (local + 1) / FADE_IN; }
+      else { scale = 1 - local * ZOOM_FROM; opacity = (local + 1) / FADE_IN; }
       panel.style.transform = `scale(${scale.toFixed(3)})`;
       panel.style.opacity = clamp(opacity, 0, 1).toFixed(3);
       panel.style.zIndex = i <= k ? 200 + i : 100 - i;
       panel.style.visibility = Math.abs(local) > 1.05 ? "hidden" : "visible";
+      // only the centred frame is clickable; others must not steal clicks
+      panel.style.pointerEvents = Math.abs(local) < 0.5 ? "auto" : "none";
     });
     const active = clamp(Math.round(progress), 0, N - 1);
     const activePanel = panels[active];
