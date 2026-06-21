@@ -2,20 +2,6 @@
 
 const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-/* ---- generic reveal-on-scroll --------------------------- */
-const revealObserver = new IntersectionObserver(
-  (entries) => {
-    entries.forEach((e) => {
-      if (e.isIntersecting) {
-        e.target.classList.add("in");
-        revealObserver.unobserve(e.target);
-      }
-    });
-  },
-  { threshold: 0.18 }
-);
-document.querySelectorAll("[data-reveal]").forEach((el) => revealObserver.observe(el));
-
 const clamp = (v, a, b) => Math.min(Math.max(v, a), b);
 
 /* ---- prologue word-by-word assembly (runs when its panel is centred) --- */
@@ -126,6 +112,7 @@ if (castNames.length && actorView) {
   let offset = 0;     // continuous centre position, in cells (loops)
   let raf = null;
   let wheelTimer = null;
+  let vel = 0;        // drag velocity for momentum (used by inertia)
   const pad = (n) => String(n).padStart(2, "0");
 
   reel.innerHTML = actors
@@ -200,7 +187,6 @@ if (castNames.length && actorView) {
   actorView.querySelector("[data-actor-close]").addEventListener("click", close);
   actorView.querySelector("[data-actor-prev]").addEventListener("click", () => animateTo(Math.round(offset) - 1));
   actorView.querySelector("[data-actor-next]").addEventListener("click", () => animateTo(Math.round(offset) + 1));
-  actorView.addEventListener("click", (e) => { if (e.target === actorView) close(); });
   // trackpad: horizontal swipe spins the drum, downward scroll closes
   actorView.addEventListener("wheel", (e) => {
     if (!isOpen()) return;
@@ -238,7 +224,7 @@ if (castNames.length && actorView) {
   }
 
   // pointer drag: horizontal spins the drum (with momentum), swipe up closes
-  let sx = 0, sy = 0, dx = 0, dy = 0, dragging = false, axis = null, startOffset = 0, vel = 0;
+  let sx = 0, sy = 0, dx = 0, dy = 0, dragging = false, axis = null, startOffset = 0;
   stage.addEventListener("pointerdown", (e) => {
     dragging = true; axis = null; sx = e.clientX; sy = e.clientY; dx = dy = 0; vel = 0;
     startOffset = offset; cancelAnimationFrame(raf); raf = null;
