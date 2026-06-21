@@ -10,7 +10,7 @@
   --paper-faint:#54514c;   /* faintest detail */
   --rule:       rgba(236, 232, 225, 0.14);
 
-  --serif: "Cormorant", Georgia, serif;
+  --serif: "Bodoni Moda", Georgia, serif;
   --sans:  "Hanken Grotesk", system-ui, sans-serif;
 
   --gutter: clamp(1.25rem, 5vw, 6rem);
@@ -184,7 +184,9 @@ img { display: block; width: 100%; height: 100%; object-fit: cover;
   display: flex; flex-direction: column; align-items: center;
   font-family: var(--serif); font-weight: 500; text-transform: uppercase;
   line-height: .9; user-select: none;
+  opacity: 0; transition: opacity .45s ease;   /* only show on its own frame */
 }
+.satiation.go { opacity: 1; }
 .satiation span {
   font-size: clamp(1.6rem, 7vw, 5rem); letter-spacing: .04em;
   opacity: 1; filter: blur(0);
@@ -325,7 +327,7 @@ img { display: block; width: 100%; height: 100%; object-fit: cover;
   *, *::before, *::after { animation: none !important; transition: none !important; }
   .prologue__text span { opacity: 1; filter: none; }
   .prologue__final { opacity: 1; }
-  .satiation span { opacity: 1; filter: none; }
+  .satiation, .satiation span { opacity: 1; filter: none; }
   [data-reveal] { opacity: 1; transform: none; }
   .hero__img { animation: none; }
 
@@ -355,42 +357,47 @@ body.modal-open { overflow: hidden; }
 }
 .actor-view.open { opacity: 1; visibility: visible; transition: opacity .5s ease, visibility 0s 0s; }
 
-/* the stage fills the screen (rounded) and zooms in from the clicked name */
+/* the stage is a full-screen filmstrip "drum" of portrait cells */
 .actor-stage {
-  position: relative;
-  width: min(96vw, 52rem); height: 94svh;
-  border-radius: clamp(.7rem, 1.8vw, 1.3rem); overflow: hidden;
-  background: #141210; touch-action: none;
+  position: relative; width: 100%; height: 100%;
+  overflow: hidden; touch-action: none;
   opacity: 0; transition: opacity .5s ease;
 }
 .actor-view.open .actor-stage { opacity: 1; }
 .actor-stage__slides { position: absolute; inset: 0; }
 
-/* slides stack and cross-fade — no horizontal track, so no neighbour peeks */
-.actor-slide { position: absolute; inset: 0; opacity: 0; transition: opacity 1.2s ease-in-out; }
-.actor-slide.on { opacity: 1; }
-.actor-slide--empty {
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: .6rem; background: #141210; text-align: center; padding: 1.2rem;
+/* one portrait cell; JS positions/scales each by distance from centre, loops */
+.actor-cell {
+  position: absolute; top: 50%; left: 50%;
+  height: min(90svh, calc(88vw * 4 / 3)); aspect-ratio: 3 / 4;
+  border-radius: clamp(.5rem, 1.4vw, 1.1rem); overflow: hidden;
+  background: #141210; will-change: transform, filter;
 }
-.actor-slide__pending {
-  font-family: var(--sans); font-size: .72rem; letter-spacing: .26em;
-  text-transform: uppercase; color: var(--paper-faint);
-}
-.actor-slide__img {
-  position: absolute; inset: 0; background-size: cover; background-position: 50% 20%;
+/* name only on the centred cell */
+.actor-cell__name { opacity: 0; transition: opacity .35s ease; }
+.actor-cell.is-center .actor-cell__name { opacity: 1; }
+.actor-cell__img {
+  position: absolute; inset: 0; background-size: cover; background-position: 50% 18%;
   filter: grayscale(1) contrast(1.05);
 }
-.actor-slide__veil {
+.actor-cell__veil {
   position: absolute; inset: 0;
-  background: linear-gradient(180deg, rgba(10,9,8,.05) 42%, rgba(10,9,8,.86) 100%);
+  background: linear-gradient(180deg, rgba(10,9,8,.05) 45%, rgba(10,9,8,.85) 100%);
 }
-.actor-slide__name {
-  position: absolute; left: 0; right: 0; bottom: clamp(1.8rem, 5vh, 3.2rem); z-index: 2;
-  text-align: center; padding: 0 1.4rem;
+.actor-cell__name {
+  position: absolute; left: 0; right: 0; bottom: clamp(1rem, 3vh, 1.8rem); z-index: 2;
+  text-align: center; padding: 0 1rem;
   font-family: var(--serif); font-weight: 500;
-  font-size: clamp(1.8rem, 5vw, 3rem); letter-spacing: .02em;
-  text-shadow: 0 2px 36px rgba(0, 0, 0, .8);
+  font-size: clamp(1.4rem, 3.6vw, 2.2rem); letter-spacing: .02em;
+  text-shadow: 0 2px 30px rgba(0, 0, 0, .85);
+}
+.actor-cell--empty {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: .5rem; text-align: center; padding: 1rem;
+}
+.actor-cell__pending {
+  font-family: var(--sans); font-size: .7rem; letter-spacing: .26em;
+  text-transform: uppercase; color: var(--paper-faint);
 }
 
 /* bottom "rollet" handle — a pill that becomes × on hover */
@@ -431,7 +438,5 @@ body.modal-open { overflow: hidden; }
 @media (prefers-reduced-motion: reduce) {
   .actor-view { transition: opacity .3s ease, visibility 0s .3s; }
   .actor-view.open { transition: opacity .3s ease, visibility 0s 0s; }
-  .actor-stage { transform: none !important; transition: opacity .3s ease; }
-  .actor-slide { transition: opacity .3s ease; }
-  .actor-slide__img { transform: none !important; }
+  .actor-stage { transition: opacity .3s ease; }
 }

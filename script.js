@@ -104,109 +104,164 @@ function initZoom(wrap) {
 
 document.querySelectorAll("[data-zoom-wrap]").forEach(initZoom);
 
-/* ---- cast: click a name → zoom into a portrait card, swipe between ----- */
+/* ---- cast: click a name → a looping filmstrip "drum" of portraits --------
+   Centre cell is large/sharp, neighbours shrink and dim; drag/swipe spins it
+   (loops forever); swipe up / Esc / handle / outside closes. ---------------- */
 const castNames = [...document.querySelectorAll(".cast__name")];
 const actorView = document.querySelector("[data-actor-view]");
 
 if (castNames.length && actorView) {
   const stage = actorView.querySelector("[data-actor-stage]");
-  const track = actorView.querySelector("[data-actor-track]");
+  const reel = actorView.querySelector("[data-actor-track]");
   const countEl = actorView.querySelector("[data-actor-count]");
   const actors = castNames.map((b) => ({ name: b.textContent.trim(), photo: b.dataset.photo || "" }));
   const N = actors.length;
-  let index = 0;
   let opener = null;
+  let offset = 0;     // continuous centre position, in cells (loops)
+  let raf = null;
+  let wheelTimer = null;
+  const pad = (n) => String(n).padStart(2, "0");
 
-  track.innerHTML = actors
+  reel.innerHTML = actors
     .map((a) => a.photo
-      ? `<div class="actor-slide">
-           <div class="actor-slide__img" data-bg="${a.photo}"></div>
-           <div class="actor-slide__veil"></div>
-           <p class="actor-slide__name">${a.name}</p>
-         </div>`
-      : `<div class="actor-slide actor-slide--empty">
-           <p class="actor-slide__name">${a.name}</p>
-           <p class="actor-slide__pending">portrét připravujeme</p>
-         </div>`)
+      ? `<article class="actor-cell">
+           <div class="actor-cell__img" data-bg="${a.photo}"></div>
+           <div class="actor-cell__veil"></div>
+           <p class="actor-cell__name">${a.name}</p>
+         </article>`
+      : `<article class="actor-cell actor-cell--empty">
+           <p class="actor-cell__name">${a.name}</p>
+           <p class="actor-cell__pending">portrét připravujeme</p>
+         </article>`)
     .join("");
-  const slides = [...track.querySelectorAll(".actor-slide")];
+  const cells = [...reel.querySelectorAll(".actor-cell")];
+  const spacingPx = () => (cells[0].offsetWidth || (stage.getBoundingClientRect().width || 1) * 0.2) * 0.98;
 
-  // lazy-load each portrait the first time it's needed; browser caches it afterwards
   function ensureBg(i) {
-    const img = slides[(i + N) % N].querySelector(".actor-slide__img");
-    if (img && img.dataset.bg) {
-      img.style.backgroundImage = `url('${img.dataset.bg}')`;
-      img.removeAttribute("data-bg");
-    }
+    const cell = cells[((i % N) + N) % N];
+    const img = cell && cell.querySelector(".actor-cell__img");
+    if (img && img.dataset.bg) { img.style.backgroundImage = `url('${img.dataset.bg}')`; img.removeAttribute("data-bg"); }
   }
 
-  // cross-fade: only the active slide is shown (no track, no neighbour peek)
-  function setIndex(i) {
-    index = (i + N) % N; // wrap around
-    ensureBg(index); ensureBg(index + 1); ensureBg(index - 1); // current + neighbours
-    slides.forEach((s, k) => s.classList.toggle("on", k === index));
-    countEl.textContent =
-      String(index + 1).padStart(2, "0") + " / " + String(N).padStart(2, "0");
+  function layout() {
+    const spacing = spacingPx();
+    cells.forEach((cell, i) => {
+      let rel = (((i - offset) % N) + N) % N;   // 0..N
+      if (rel > N / 2) rel -= N;                 // wrap to -N/2..N/2 (shortest way)
+      const ax = Math.abs(rel);
+      // continuous strip: same size, touching; centre lit, neighbours dimmed
+      cell.style.transform = `translate(-50%, -50%) translateX(${(rel * spacing).toFixed(1)}px)`;
+      cell.style.filter = `brightness(${Math.max(0.42, 1 - ax * 0.24).toFixed(3)})`;
+      cell.style.opacity = "1";
+      cell.style.zIndex = String(Math.round(100 - ax * 10));
+      cell.style.visibility = ax > 3.2 ? "hidden" : "visible";
+      cell.classList.toggle("is-center", ax < 0.5);
+      if (ax <= 2.2) ensureBg(i);
+    });
+    countEl.textContent = pad(((Math.round(offset) % N) + N) % N + 1) + " / " + pad(N);
   }
+
+  function animateTo(target) {
+    cancelAnimationFrame(raf); raf = null;
+    const step = () => {
+      offset += (target - offset) * 0.12;   // gentler settle
+      if (Math.abs(target - offset) < 0.002) { offset = target; layout(); raf = null; return; }
+      layout(); raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+  }
+
+  const isOpen = () => actorView.classList.contains("open");
 
   function open(i, btn) {
     opener = btn || null;
-    stage.style.transform = "";
-    setIndex(i);
+    cancelAnimationFrame(raf); raf = null;
+    offset = i;
     document.body.classList.add("modal-open");
     actorView.setAttribute("aria-hidden", "false");
-    actorView.classList.add("open");     // fades in (no zoom)
+    actorView.classList.add("open");
+    layout();
   }
-
   function close() {
-    stage.style.transform = "";          // clear any drag transform so CSS zooms back out
+    stage.style.transform = "";
     actorView.classList.remove("open");
     actorView.setAttribute("aria-hidden", "true");
     document.body.classList.remove("modal-open");
     if (opener) opener.focus();
   }
 
-  const isOpen = () => actorView.classList.contains("open");
-
   castNames.forEach((b, i) => b.addEventListener("click", () => open(i, b)));
   actorView.querySelector("[data-actor-close]").addEventListener("click", close);
-  actorView.querySelector("[data-actor-prev]").addEventListener("click", () => setIndex(index - 1));
-  actorView.querySelector("[data-actor-next]").addEventListener("click", () => setIndex(index + 1));
-  actorView.addEventListener("click", (e) => { if (e.target === actorView) close(); }); // outside stage
-  actorView.addEventListener("wheel", (e) => { if (isOpen() && e.deltaY > 18) close(); }, { passive: true });
+  actorView.querySelector("[data-actor-prev]").addEventListener("click", () => animateTo(Math.round(offset) - 1));
+  actorView.querySelector("[data-actor-next]").addEventListener("click", () => animateTo(Math.round(offset) + 1));
+  actorView.addEventListener("click", (e) => { if (e.target === actorView) close(); });
+  // trackpad: horizontal swipe spins the drum, downward scroll closes
+  actorView.addEventListener("wheel", (e) => {
+    if (!isOpen()) return;
+    if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
+      e.preventDefault();
+      offset += e.deltaX / spacingPx() * 0.6;
+      layout();
+      clearTimeout(wheelTimer);
+      wheelTimer = setTimeout(() => animateTo(Math.round(offset)), 140);
+    } else if (e.deltaY > 24) {
+      close();
+    }
+  }, { passive: false });
 
   document.addEventListener("keydown", (e) => {
     if (!isOpen()) return;
     if (e.key === "Escape") close();
-    else if (e.key === "ArrowLeft") setIndex(index - 1);
-    else if (e.key === "ArrowRight") setIndex(index + 1);
+    else if (e.key === "ArrowLeft") animateTo(Math.round(offset) - 1);
+    else if (e.key === "ArrowRight") animateTo(Math.round(offset) + 1);
   });
 
-  // pointer drag on the stage: horizontal = cross-fade to next/prev, swipe UP = close
-  let sx = 0, sy = 0, dx = 0, dy = 0, dragging = false, axis = null;
+  // momentum glide that gently settles on the nearest cell (smooth, no hard snap)
+  function inertia() {
+    cancelAnimationFrame(raf); raf = null;
+    const step = () => {
+      offset += vel;
+      vel *= 0.9;                          // friction
+      const nearest = Math.round(offset);
+      vel += (nearest - offset) * 0.025;   // soft pull toward the nearest cell
+      layout();
+      if (Math.abs(vel) < 0.0009 && Math.abs(nearest - offset) < 0.003) { offset = nearest; layout(); raf = null; return; }
+      raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+  }
+
+  // pointer drag: horizontal spins the drum (with momentum), swipe up closes
+  let sx = 0, sy = 0, dx = 0, dy = 0, dragging = false, axis = null, startOffset = 0, vel = 0;
   stage.addEventListener("pointerdown", (e) => {
-    dragging = true; axis = null; sx = e.clientX; sy = e.clientY; dx = dy = 0;
+    dragging = true; axis = null; sx = e.clientX; sy = e.clientY; dx = dy = 0; vel = 0;
+    startOffset = offset; cancelAnimationFrame(raf); raf = null;
     stage.setPointerCapture(e.pointerId);
   });
   stage.addEventListener("pointermove", (e) => {
     if (!dragging) return;
     dx = e.clientX - sx; dy = e.clientY - sy;
     if (axis === null && (Math.abs(dx) > 8 || Math.abs(dy) > 8)) axis = Math.abs(dx) > Math.abs(dy) ? "x" : "y";
-    // light feedback only (switching is a cross-fade, not a slide)
-    if (axis === "x") stage.style.transform = `translateX(${(dx * 0.25).toFixed(1)}px)`;
-    else if (axis === "y" && dy < 0) stage.style.transform = `translateY(${(dy * 0.5).toFixed(1)}px) scale(${(1 - Math.min(-dy / 1000, 0.1)).toFixed(3)})`;
+    if (axis === "x") {
+      const no = startOffset - dx / spacingPx();
+      vel = Math.max(-1.2, Math.min(1.2, no - offset)); // track speed for momentum
+      offset = no;
+      layout();
+    } else if (axis === "y" && dy < 0) {
+      stage.style.transform = `translateY(${(dy * 0.5).toFixed(1)}px) scale(${(1 - Math.min(-dy / 1000, 0.1)).toFixed(3)})`;
+    }
   });
   function endDrag() {
     if (!dragging) return;
     dragging = false;
-    if (axis === "y" && dy < -110) { close(); return; }   // swipe up to close
+    if (axis === "y" && dy < -110) { close(); return; }
     stage.style.transform = "";
-    if (axis === "x" && Math.abs(dx) > 60) setIndex(index + (dx < 0 ? 1 : -1));
+    if (axis === "x") inertia();
   }
   stage.addEventListener("pointerup", endDrag);
   stage.addEventListener("pointercancel", endDrag);
 
-  setIndex(0);
+  window.addEventListener("resize", () => { if (isOpen()) layout(); });
 }
 
 /* ---- footer: slow cross-fade through the reserve photos ---------------- */
