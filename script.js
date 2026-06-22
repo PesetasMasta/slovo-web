@@ -75,10 +75,16 @@ function initZoom(wrap) {
     if (activePanel && "assemble" in activePanel.dataset) runAssemble(activePanel);
   }
 
+  // Cache viewport + wrap height and refresh only on resize. Reading
+  // window.innerHeight every scroll frame made the mapping jump on the first
+  // scroll, when mobile browser chrome (the URL bar) collapses mid-gesture.
   let ticking = false;
+  let viewportH = window.innerHeight;
+  let wrapH = wrap.offsetHeight;
+  function measure() { viewportH = window.innerHeight; wrapH = wrap.offsetHeight; }
   function update() {
     const rect = wrap.getBoundingClientRect();
-    const total = wrap.offsetHeight - window.innerHeight;
+    const total = wrapH - viewportH;
     const scrolled = clamp(-rect.top, 0, total);
     const u = total > 0 ? (scrolled / total) * totalUnits : 0;
     render(progressAt(u));
@@ -90,170 +96,176 @@ function initZoom(wrap) {
   }
 
   window.addEventListener("scroll", onScroll, { passive: true });
-  window.addEventListener("resize", onScroll);
+  window.addEventListener("resize", () => { measure(); onScroll(); });
+  measure();
   update();
 }
 
 document.querySelectorAll("[data-zoom-wrap]").forEach(initZoom);
 
-/* ---- cast: click a name → a looping filmstrip "drum" of portraits --------
-   Centre cell is large/sharp, neighbours shrink and dim; drag/swipe spins it
-   (loops forever); swipe up / Esc / handle / outside closes. ---------------- */
+/* ---- cast: click a name → a native horizontal scroll-snap filmstrip --------
+   Real horizontal scrolling — follows the finger, native momentum — that snaps
+   firmly onto each portrait. The centre is lit + full size, neighbours dimmed.
+   The strip loops forever: the cast is repeated several times and the scroll
+   position is silently jumped by whole copies near the ends (the copies are
+   identical, so the jump is invisible). × / Esc / tap-outside / swipe-up close. */
 const castNames = [...document.querySelectorAll(".cast__name")];
 const actorView = document.querySelector("[data-actor-view]");
 
 if (castNames.length && actorView) {
   const stage = actorView.querySelector("[data-actor-stage]");
-  const reel = actorView.querySelector("[data-actor-track]");
+  const track = actorView.querySelector("[data-actor-track]");
   const countEl = actorView.querySelector("[data-actor-count]");
   const actors = castNames.map((b) => ({ name: b.textContent.trim(), photo: b.dataset.photo || "" }));
   const N = actors.length;
-  let opener = null;
-  let offset = 0;     // continuous centre position, in cells (loops)
-  let raf = null;
-  let wheelTimer = null;
-  let vel = 0;        // drag velocity for momentum (used by inertia)
+  const COPIES = 5;                       // repeated runways; we live in the middle
+  const MID = Math.floor(COPIES / 2);
   const pad = (n) => String(n).padStart(2, "0");
+  let opener = null;
+  let current = 0;                        // actor index currently centred
 
-  reel.innerHTML = actors
-    .map((a) => a.photo
-      ? `<article class="actor-cell">
-           <div class="actor-cell__img" data-bg="${a.photo}"></div>
-           <div class="actor-cell__veil"></div>
-           <p class="actor-cell__name">${a.name}</p>
-         </article>`
-      : `<article class="actor-cell actor-cell--empty">
-           <p class="actor-cell__name">${a.name}</p>
-           <p class="actor-cell__pending">portrét připravujeme</p>
-         </article>`)
-    .join("");
-  const cells = [...reel.querySelectorAll(".actor-cell")];
-  const spacingPx = () => (cells[0].offsetWidth || (stage.getBoundingClientRect().width || 1) * 0.2) * 0.98;
+  const cellHTML = (a) => a.photo
+    ? `<article class="actor-cell">
+         <div class="actor-cell__img" data-bg="${a.photo}"></div>
+         <div class="actor-cell__veil"></div>
+         <p class="actor-cell__name">${a.name}</p>
+       </article>`
+    : `<article class="actor-cell actor-cell--empty">
+         <p class="actor-cell__name">${a.name}</p>
+         <p class="actor-cell__pending">portrét připravujeme</p>
+       </article>`;
 
-  function ensureBg(i) {
-    const cell = cells[((i % N) + N) % N];
-    const img = cell && cell.querySelector(".actor-cell__img");
+  track.innerHTML = Array.from({ length: COPIES }, () => actors.map(cellHTML).join("")).join("");
+  const cells = [...track.querySelectorAll(".actor-cell")];
+  cells.forEach((c, i) => (c.dataset.actor = String(i % N)));
+
+  // distance between two adjacent cell centres (cell width + gap), measured live
+  const pitch = () => cells[1].getBoundingClientRect().left - cells[0].getBoundingClientRect().left;
+  const cycle = () => pitch() * N;        // width of one full cast copy
+  // scrollLeft that would centre a given cell in the scrollport
+  const centreScroll = (cell) => {
+    const cr = cell.getBoundingClientRect(), tr = track.getBoundingClientRect();
+    return track.scrollLeft + (cr.left + cr.width / 2) - (tr.left + tr.width / 2);
+  };
+
+  function ensureBg(cell) {
+    const img = cell.querySelector(".actor-cell__img");
     if (img && img.dataset.bg) { img.style.backgroundImage = `url('${img.dataset.bg}')`; img.removeAttribute("data-bg"); }
   }
 
-  function layout() {
-    const spacing = spacingPx();
-    cells.forEach((cell, i) => {
-      let rel = (((i - offset) % N) + N) % N;   // 0..N
-      if (rel > N / 2) rel -= N;                 // wrap to -N/2..N/2 (shortest way)
-      const ax = Math.abs(rel);
-      // continuous strip: same size, touching; centre lit, neighbours dimmed
-      cell.style.transform = `translate(-50%, -50%) translateX(${(rel * spacing).toFixed(1)}px)`;
-      cell.style.filter = `brightness(${Math.max(0.42, 1 - ax * 0.24).toFixed(3)})`;
-      cell.style.opacity = "1";
-      cell.style.zIndex = String(Math.round(100 - ax * 10));
-      cell.style.visibility = ax > 3.2 ? "hidden" : "visible";
-      cell.classList.toggle("is-center", ax < 0.5);
-      if (ax <= 2.2) ensureBg(i);
+  // lit centre / dimmed sides, driven by each cell's distance from the centre
+  let painting = false;
+  function paint() {
+    painting = false;
+    const tr = track.getBoundingClientRect();
+    const mid = tr.left + tr.width / 2;
+    const p = pitch() || 1;
+    let best = null, bestD = Infinity;
+    cells.forEach((cell) => {
+      const r = cell.getBoundingClientRect();
+      const d = Math.abs(r.left + r.width / 2 - mid) / p;   // distance in cells
+      if (d < bestD) { bestD = d; best = cell; }
+      cell.style.filter = `brightness(${clamp(1 - d * 0.66, 0.16, 1).toFixed(3)})`;
+      cell.style.transform = `scale(${(1 - Math.min(d, 1) * 0.14).toFixed(3)})`;
+      cell.classList.toggle("is-center", d < 0.5);
+      if (d < 2.2) ensureBg(cell);
     });
-    countEl.textContent = pad(((Math.round(offset) % N) + N) % N + 1) + " / " + pad(N);
+    if (best) { current = Number(best.dataset.actor); countEl.textContent = pad(current + 1) + " / " + pad(N); }
   }
 
-  function animateTo(target) {
-    cancelAnimationFrame(raf); raf = null;
-    const step = () => {
-      offset += (target - offset) * 0.12;   // gentler settle
-      if (Math.abs(target - offset) < 0.002) { offset = target; layout(); raf = null; return; }
-      layout(); raf = requestAnimationFrame(step);
-    };
-    raf = requestAnimationFrame(step);
+  // keep the live position inside the middle copies; jump by whole copies only
+  // when motion has settled, so native momentum is never interrupted (which is
+  // what used to park the drum between two portraits).
+  let settleTimer = null;
+  function recentre() {
+    clearTimeout(settleTimer);
+    settleTimer = setTimeout(() => {
+      const tr = track.getBoundingClientRect();
+      const mid = tr.left + tr.width / 2;
+      let bi = 0, bestD = Infinity;
+      cells.forEach((cell, i) => {
+        const r = cell.getBoundingClientRect();
+        const d = Math.abs(r.left + r.width / 2 - mid);
+        if (d < bestD) { bestD = d; bi = i; }
+      });
+      const copy = Math.floor(bi / N);
+      if (copy <= 0 || copy >= COPIES - 1) track.scrollLeft += (MID - copy) * cycle();
+    }, 90);
+  }
+
+  function onTrackScroll() {
+    if (!painting) { painting = true; requestAnimationFrame(paint); }
+    recentre();
   }
 
   const isOpen = () => actorView.classList.contains("open");
 
+  function centreOn(actorIndex, smooth) {
+    const cell = cells[MID * N + (((actorIndex % N) + N) % N)];
+    track.scrollTo({ left: centreScroll(cell), behavior: smooth ? "smooth" : "auto" });
+  }
+  function step(dir) { track.scrollBy({ left: dir * pitch(), behavior: "smooth" }); }
+
   function open(i, btn) {
     opener = btn || null;
-    cancelAnimationFrame(raf); raf = null;
-    offset = i;
     document.body.classList.add("modal-open");
     actorView.setAttribute("aria-hidden", "false");
     actorView.classList.add("open");
-    layout();
+    centreOn(i, false);
+    paint();
   }
   function close() {
-    stage.style.transform = "";
     actorView.classList.remove("open");
     actorView.setAttribute("aria-hidden", "true");
     document.body.classList.remove("modal-open");
-    if (opener) opener.focus();
+    if (opener) opener.focus({ preventScroll: true });
   }
 
   castNames.forEach((b, i) => b.addEventListener("click", () => open(i, b)));
   actorView.querySelector("[data-actor-close]").addEventListener("click", close);
-  actorView.querySelector("[data-actor-prev]").addEventListener("click", () => animateTo(Math.round(offset) - 1));
-  actorView.querySelector("[data-actor-next]").addEventListener("click", () => animateTo(Math.round(offset) + 1));
-  // trackpad: horizontal swipe spins the drum, downward scroll closes
-  actorView.addEventListener("wheel", (e) => {
+  actorView.querySelector("[data-actor-prev]").addEventListener("click", () => step(-1));
+  actorView.querySelector("[data-actor-next]").addEventListener("click", () => step(1));
+  track.addEventListener("scroll", onTrackScroll, { passive: true });
+
+  // mouse wheel: a vertical notch scrolls the horizontal strip (trackpad
+  // horizontal swipes already scroll it natively); snap settles it.
+  track.addEventListener("wheel", (e) => {
     if (!isOpen()) return;
-    if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
-      e.preventDefault();
-      offset += e.deltaX / spacingPx() * 0.6;
-      layout();
-      clearTimeout(wheelTimer);
-      wheelTimer = setTimeout(() => animateTo(Math.round(offset)), 140);
-    } else if (e.deltaY > 24) {
-      close();
-    }
+    if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) { e.preventDefault(); track.scrollLeft += e.deltaY; }
   }, { passive: false });
 
   document.addEventListener("keydown", (e) => {
     if (!isOpen()) return;
     if (e.key === "Escape") close();
-    else if (e.key === "ArrowLeft") animateTo(Math.round(offset) - 1);
-    else if (e.key === "ArrowRight") animateTo(Math.round(offset) + 1);
+    else if (e.key === "ArrowLeft") step(-1);
+    else if (e.key === "ArrowRight") step(1);
   });
 
-  // momentum glide that gently settles on the nearest cell (smooth, no hard snap)
-  function inertia() {
-    cancelAnimationFrame(raf); raf = null;
-    const step = () => {
-      offset += vel;
-      vel *= 0.9;                          // friction
-      const nearest = Math.round(offset);
-      vel += (nearest - offset) * 0.025;   // soft pull toward the nearest cell
-      layout();
-      if (Math.abs(vel) < 0.0009 && Math.abs(nearest - offset) < 0.003) { offset = nearest; layout(); raf = null; return; }
-      raf = requestAnimationFrame(step);
-    };
-    raf = requestAnimationFrame(step);
-  }
-
-  // pointer drag: horizontal spins the drum (with momentum), swipe up closes
-  let sx = 0, sy = 0, dx = 0, dy = 0, dragging = false, axis = null, startOffset = 0;
-  stage.addEventListener("pointerdown", (e) => {
-    dragging = true; axis = null; sx = e.clientX; sy = e.clientY; dx = dy = 0; vel = 0;
-    startOffset = offset; cancelAnimationFrame(raf); raf = null;
-    stage.setPointerCapture(e.pointerId);
-  });
+  // vertical swipe up closes (touch-action: pan-x leaves vertical gestures to
+  // us; horizontal pans are consumed by the native scroll). A plain tap on a
+  // side portrait centres it; a tap on the dark margin closes.
+  let sx = 0, sy = 0, dx = 0, dy = 0, down = false, moved = false;
+  stage.addEventListener("pointerdown", (e) => { down = true; moved = false; sx = e.clientX; sy = e.clientY; dx = dy = 0; });
   stage.addEventListener("pointermove", (e) => {
-    if (!dragging) return;
+    if (!down) return;
     dx = e.clientX - sx; dy = e.clientY - sy;
-    if (axis === null && (Math.abs(dx) > 8 || Math.abs(dy) > 8)) axis = Math.abs(dx) > Math.abs(dy) ? "x" : "y";
-    if (axis === "x") {
-      const no = startOffset - dx / spacingPx();
-      vel = Math.max(-1.2, Math.min(1.2, no - offset)); // track speed for momentum
-      offset = no;
-      layout();
-    } else if (axis === "y" && dy < 0) {
-      stage.style.transform = `translateY(${(dy * 0.5).toFixed(1)}px) scale(${(1 - Math.min(-dy / 1000, 0.1)).toFixed(3)})`;
-    }
+    if (Math.abs(dx) > 8 || Math.abs(dy) > 8) moved = true;
   });
-  function endDrag() {
-    if (!dragging) return;
-    dragging = false;
-    if (axis === "y" && dy < -110) { close(); return; }
-    stage.style.transform = "";
-    if (axis === "x") inertia();
-  }
-  stage.addEventListener("pointerup", endDrag);
-  stage.addEventListener("pointercancel", endDrag);
+  stage.addEventListener("pointerup", () => {
+    if (!down) return;
+    down = false;
+    if (dy < -70 && Math.abs(dy) > Math.abs(dx)) close();
+  });
+  stage.addEventListener("pointercancel", () => { down = false; });
+  stage.addEventListener("click", (e) => {
+    if (!isOpen() || moved) return;
+    if (e.target.closest("[data-actor-close]")) return;
+    const cell = e.target.closest(".actor-cell");
+    if (cell) { track.scrollTo({ left: centreScroll(cell), behavior: "smooth" }); return; }
+    close();
+  });
 
-  window.addEventListener("resize", () => { if (isOpen()) layout(); });
+  window.addEventListener("resize", () => { if (isOpen()) { centreOn(current, false); paint(); } });
 }
 
 /* ---- footer: slow cross-fade through the reserve photos ---------------- */
