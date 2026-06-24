@@ -114,10 +114,10 @@ img { display: block; width: 100%; height: 100%; object-fit: cover;
 /* ===========================================================
    3 — THE WORDS  (zoom through each word's first letter)
    =========================================================== */
-.zoom-wrap { position: relative; height: 900vh; }
+.zoom-wrap { position: relative; height: 100dvh; }
 .zoom-pin {
-  position: sticky; top: 0; height: 100dvh; overflow: hidden;
-  background: var(--ink);
+  position: fixed; inset: 0; height: 100dvh; overflow: hidden;
+  background: var(--ink); touch-action: none;
 }
 
 /* acronym indicator */
@@ -294,7 +294,6 @@ img { display: block; width: 100%; height: 100%; object-fit: cover;
 
 /* ---- responsive ----------------------------------------- */
 @media (max-width: 720px) {
-  .zoom-wrap { height: 780vh; }
   .zoom-letter { font-size: 64vh; }
 }
 
@@ -306,7 +305,7 @@ img { display: block; width: 100%; height: 100%; object-fit: cover;
   .satiation, .satiation span { opacity: 1; filter: none; }
 
   .zoom-wrap { height: auto !important; }
-  .zoom-pin { position: static !important; height: auto !important; }
+  .zoom-pin { position: static !important; height: auto !important; touch-action: auto !important; }
   .acronym, .book__hint { display: none; }
   .zoom-stage { position: static; }
   .zoom-panel {
