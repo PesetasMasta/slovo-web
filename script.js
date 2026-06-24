@@ -13,12 +13,29 @@ function runAssemble(panel) {
   setTimeout(() => panel.classList.add("done"), words.length * 130 + 600);
 }
 
-/* ---- scroll-driven zoom: fall through one panel into the next ---------- */
-const ZOOM_IN = 7.0;    // how hard the leaving panel rushes toward the viewer
-const ZOOM_FROM = 0.2;  // arriving panel zooms IN from a bit smaller up to 1
-const FADE_IN = 0.5;    // arriving panel reaches full opacity within this much of centre
+/* ---- gesture-driven journey: follow-finger stops + autoplay reel -------
+   The page is a fixed full-viewport stage (no scroll timeline). You move
+   between 4 manual STOPS (hero, "slovo o slově", herci, sledovat) with a
+   follow-finger slide+reveal. Between hero and the word stop the opening
+   photo, prologue and the five letters AUTOPLAY as a zoom-through reel: a
+   slow zoom-in that accelerates into each page change. Hold to pause. */
+const GRAB = 0.96;            // subtle zoom-out "grab" on touch (manual nav)
+const ZOOM_FROM = 0.82;       // manual arriving panel start scale
+const COMMIT_FRAC = 0.30;     // commit distance = 30% of viewport height
+const THRESHOLD = 0.42;       // release past this fraction of commit -> commit
+const FLICK_V = 0.6;          // px/ms flick velocity that commits regardless
+const DUR = 440;              // manual transition duration (ms)
+const MANUAL_EASE = "cubic-bezier(.22,.61,.36,1)";
+const AUTO_FROM = 0.82;       // autoplay arriving start scale
+const AUTO_ZOOM = 6.0;        // autoplay leaving zoom-toward-viewer target
+const AUTO_DUR = 820;         // autoplay page-change duration (ms)
+const EASE_IN = "cubic-bezier(.55,.085,.68,.53)";  // slow -> fast
+const SLOW_TO = 1.08;         // gentle pre-zoom target reached across the dwell
+const DWELL_SENTENCE = 5000;  // hold on the prologue/sentence frame
+const DWELL_REST = 1200;      // hold on every other reel frame
+const WHEEL_COOLDOWN = 560;   // ms after a wheel step before another can fire
 
-function initZoom(wrap) {
+function initJourney(wrap) {
   const stage = wrap.querySelector("[data-zoom]");
   if (!stage || reduceMotion) return;
 
@@ -27,81 +44,211 @@ function initZoom(wrap) {
   const letters = [...wrap.querySelectorAll(".acronym [data-letter]")];
   const satiation = stage.querySelector("[data-satiation]");
   const satiationPanel = panels.findIndex((p) => satiation && p.contains(satiation));
-  const N = panels.length;
 
-  // Scroll timeline: each transition is 1 unit; a panel's data-dwell adds units
-  // where it stays centred (for reading), so the photo and prologue don't rush by.
-  const segs = [];
-  let cum = 0;
-  for (let i = 0; i < N; i++) {
-    const dwell = parseFloat(panels[i].dataset.dwell || "0");
-    if (dwell > 0) { segs.push([cum, cum + dwell, i, i]); cum += dwell; }
-    if (i < N - 1) { segs.push([cum, cum + 1, i, i + 1]); cum += 1; }
-  }
-  const totalUnits = cum || 1;
-  function progressAt(u) {
-    for (const [u0, u1, p0, p1] of segs) {
-      if (u <= u1) return p0 + (p1 - p0) * (u1 > u0 ? clamp((u - u0) / (u1 - u0), 0, 1) : 0);
-    }
-    return N - 1;
-  }
+  const STOPS = panels.map((p, i) => ("stop" in p.dataset ? i : -1)).filter((i) => i >= 0);
+  const REEL_END = STOPS[1];     // the word stop the reel lands on
+  const CAST_STOP = STOPS[2];    // skip-ahead target while the reel plays
+  const isSentence = (i) => "assemble" in panels[i].dataset;
 
-  function render(progress) {
-    // local = 0 centred, >0 leaving (zoom in), <0 arriving. Arriving panels sit
-    // BEHIND and go opaque fast, so the leaving panel fades over a solid backdrop:
-    // no black gap, minimal ghosting, identical going up or down.
-    const k = Math.floor(progress);
-    panels.forEach((panel, i) => {
-      const local = progress - i;
-      let scale, opacity;
-      // leaving panel zooms toward viewer + fades; arriving stays full-screen,
-      // easing from slightly-larger down to 1 (full-screen → no black borders)
-      if (local >= 0) { scale = 1 + local * ZOOM_IN; opacity = 1 - local * 1.4; }
-      else { scale = 1 + local * ZOOM_FROM; opacity = (local + 1) / FADE_IN; }
-      panel.style.transform = `scale(${scale.toFixed(3)})`;
-      panel.style.opacity = clamp(opacity, 0, 1).toFixed(3);
-      panel.style.zIndex = i <= k ? 200 + i : 100 - i;
-      panel.style.visibility = Math.abs(local) > 1.05 ? "hidden" : "visible";
-      // only the centred frame is clickable; others must not steal clicks
-      panel.style.pointerEvents = Math.abs(local) < 0.5 ? "auto" : "none";
+  const vh = () => window.innerHeight;
+  const commitDist = () => vh() * COMMIT_FRAC;
+  const getScale = (el) => { try { return new DOMMatrix(getComputedStyle(el).transform).a || 1; } catch (e) { return 1; } };
+
+  let cur = 0, busy = false, autoplay = false, autoTimer = null, autoWait = 0, autoStart = 0, paused = false;
+
+  const hide = (el) => { el.style.transition = "none"; el.style.opacity = "0"; el.style.visibility = "hidden"; el.style.zIndex = "1"; el.style.transform = "scale(1)"; el.style.pointerEvents = "none"; };
+
+  function settle() {
+    panels.forEach((el, i) => {
+      if (i === cur) {
+        el.style.transition = "none"; el.style.transform = "scale(1)"; el.style.opacity = "1";
+        el.style.visibility = "visible"; el.style.zIndex = "20"; el.style.pointerEvents = "auto";
+      } else hide(el);
     });
-    const active = clamp(Math.round(progress), 0, N - 1);
-    const activePanel = panels[active];
-    const ai = activePanel ? activePanel.dataset.acronym : undefined; // which letter, if any
+    paintChrome();
+  }
+
+  function paintChrome() {
+    const ai = panels[cur].dataset.acronym;
     letters.forEach((l, i) => l.classList.toggle("on", String(i) === ai));
-    // hide the acronym navigator on the hero (panel 0); fade it in from page two
-    if (acronymNav) acronymNav.style.opacity = clamp((progress - 0.45) / 0.45, 0, 1).toFixed(2);
-    if (satiation) satiation.classList.toggle("go", active === satiationPanel);
-    if (activePanel && "assemble" in activePanel.dataset) runAssemble(activePanel);
+    if (acronymNav) acronymNav.style.opacity = cur === 0 ? "0" : "1";
+    if (satiation) satiation.classList.toggle("go", cur === satiationPanel);
   }
 
-  // Cache viewport + wrap height and refresh only on resize. Reading
-  // window.innerHeight every scroll frame made the mapping jump on the first
-  // scroll, when mobile browser chrome (the URL bar) collapses mid-gesture.
-  let ticking = false;
-  let viewportH = window.innerHeight;
-  let wrapH = wrap.offsetHeight;
-  function measure() { viewportH = window.innerHeight; wrapH = wrap.offsetHeight; }
-  function update() {
-    const rect = wrap.getBoundingClientRect();
-    const total = wrapH - viewportH;
-    const scrolled = clamp(-rect.top, 0, total);
-    const u = total > 0 ? (scrolled / total) * totalUnits : 0;
-    render(progressAt(u));
-    ticking = false;
+  const reflow = () => { void stage.offsetWidth; };
+
+  const nextStop = () => { const i = STOPS.indexOf(cur); return (i >= 0 && i < STOPS.length - 1) ? STOPS[i + 1] : -1; };
+  const prevStop = () => { const i = STOPS.indexOf(cur); return i > 0 ? STOPS[i - 1] : -1; };
+  const arriveTarget = () => (autoplay ? CAST_STOP : cur === 0 ? 1 : nextStop());
+  const backTarget = () => (autoplay ? 0 : prevStop());
+
+  // live follow-finger frame during a manual drag/scroll
+  function preview(rawDy, grabbed) {
+    const h = vh();
+    panels.forEach(hide);
+    if (rawDy < 0) {
+      const t = arriveTarget(); if (t < 0) { settle(); return; }
+      const p = clamp(-rawDy / commitDist(), 0, 1), leave = panels[cur], arr = panels[t];
+      leave.style.visibility = "visible"; leave.style.zIndex = "20";
+      leave.style.transform = `translateY(${rawDy}px) scale(${grabbed ? GRAB : 1})`; leave.style.opacity = (1 - p * 0.6).toFixed(3);
+      arr.style.visibility = "visible"; arr.style.zIndex = "10";
+      arr.style.transform = `scale(${(ZOOM_FROM + (1 - ZOOM_FROM) * p).toFixed(3)})`; arr.style.opacity = p.toFixed(3);
+    } else if (rawDy > 0) {
+      const t = backTarget(); if (t < 0) { settle(); return; }
+      const p = clamp(rawDy / commitDist(), 0, 1), incoming = panels[t], leaving = panels[cur];
+      leaving.style.visibility = "visible"; leaving.style.zIndex = "10";
+      leaving.style.transform = `scale(${(1 - (1 - ZOOM_FROM) * p).toFixed(3)})`; leaving.style.opacity = (1 - p * 0.8).toFixed(3);
+      incoming.style.visibility = "visible"; incoming.style.zIndex = "20";
+      incoming.style.transform = `translateY(${Math.min(rawDy - h, 0)}px) scale(${grabbed ? GRAB : 1})`; incoming.style.opacity = "1";
+    } else settle();
   }
 
-  function onScroll() {
-    if (!ticking) { ticking = true; requestAnimationFrame(update); }
+  // MANUAL transition: slide + reveal (forward or backward)
+  function go(target) {
+    if (busy || target === cur || target < 0) return;
+    busy = true; const h = vh(), dir = target > cur ? -1 : 1;
+    const ease = `transform ${DUR}ms ${MANUAL_EASE}, opacity ${DUR}ms ease`;
+    panels.forEach((el, i) => { if (i !== cur && i !== target) hide(el); });
+    if (dir < 0) {
+      const leave = panels[cur], arr = panels[target];
+      leave.style.transition = "none"; leave.style.zIndex = "20"; leave.style.visibility = "visible"; leave.style.transform = "translateY(0) scale(1)"; leave.style.opacity = "1"; leave.style.pointerEvents = "none";
+      arr.style.transition = "none"; arr.style.zIndex = "10"; arr.style.visibility = "visible"; arr.style.transform = `scale(${ZOOM_FROM})`; arr.style.opacity = "0"; arr.style.pointerEvents = "none";
+      reflow();
+      leave.style.transition = ease; arr.style.transition = ease;
+      leave.style.transform = `translateY(${-h * 1.05}px) scale(${GRAB})`; leave.style.opacity = "0";
+      arr.style.transform = "scale(1)"; arr.style.opacity = "1";
+    } else {
+      const incoming = panels[target], behind = panels[cur];
+      incoming.style.transition = "none"; incoming.style.zIndex = "20"; incoming.style.visibility = "visible"; incoming.style.transform = `translateY(${-h}px) scale(1)`; incoming.style.opacity = "1"; incoming.style.pointerEvents = "none";
+      behind.style.transition = "none"; behind.style.zIndex = "10"; behind.style.visibility = "visible"; behind.style.transform = "scale(1)"; behind.style.opacity = "1"; behind.style.pointerEvents = "none";
+      reflow();
+      incoming.style.transition = ease; behind.style.transition = ease;
+      incoming.style.transform = "translateY(0) scale(1)"; behind.style.transform = `scale(${ZOOM_FROM})`; behind.style.opacity = "0";
+    }
+    setTimeout(() => { cur = target; settle(); busy = false; onLand(); }, DUR);
   }
 
-  window.addEventListener("scroll", onScroll, { passive: true });
-  window.addEventListener("resize", () => { measure(); onScroll(); });
-  measure();
-  update();
+  // AUTOPLAY page change: continue from the slow pre-zoom and ACCELERATE
+  function autoZoom(target) {
+    if (busy || target === cur) return; busy = true;
+    const leave = panels[cur], arr = panels[target];
+    panels.forEach((el, i) => { if (i !== cur && i !== target) hide(el); });
+    arr.style.transition = "none"; arr.style.zIndex = "10"; arr.style.visibility = "visible"; arr.style.transform = `scale(${AUTO_FROM})`; arr.style.opacity = "0"; arr.style.pointerEvents = "none";
+    reflow();
+    leave.style.zIndex = "20"; leave.style.pointerEvents = "none";
+    leave.style.transition = `transform ${AUTO_DUR}ms ${EASE_IN}, opacity ${Math.round(AUTO_DUR * 0.6)}ms ${EASE_IN}`;
+    leave.style.transform = `scale(${AUTO_ZOOM})`; leave.style.opacity = "0";
+    arr.style.transition = `transform ${AUTO_DUR}ms ${EASE_IN}, opacity ${Math.round(AUTO_DUR * 0.75)}ms ease`;
+    arr.style.transform = "scale(1)"; arr.style.opacity = "1";
+    setTimeout(() => { cur = target; settle(); busy = false; onLand(); }, AUTO_DUR);
+  }
+
+  function snapBack() {
+    busy = true; const ease = `transform ${DUR}ms ${MANUAL_EASE}, opacity ${DUR}ms ease`;
+    panels.forEach((el, i) => { el.style.transition = i === cur ? ease : "none"; });
+    reflow(); panels[cur].style.transform = "scale(1)"; panels[cur].style.opacity = "1";
+    setTimeout(() => { settle(); busy = false; }, DUR);
+  }
+
+  // gentle pre-zoom that begins the moment a reel frame lands; ends with autoZoom
+  function beginDwell(fromScale) {
+    const el = panels[cur];
+    el.style.transition = "none"; el.style.transform = `scale(${fromScale})`; reflow();
+    el.style.transition = `transform ${autoWait}ms linear`; el.style.transform = `scale(${SLOW_TO})`;
+    autoStart = performance.now();
+    clearTimeout(autoTimer);
+    autoTimer = setTimeout(function tick() {
+      if (!autoplay || paused) return;
+      if (busy) { autoTimer = setTimeout(tick, 80); return; }
+      autoZoom(cur + 1);
+    }, autoWait);
+  }
+
+  function onLand() { if (isSentence(cur)) runAssemble(panels[cur]); scheduleNext(); }
+
+  function scheduleNext() {
+    if (!autoplay) return;
+    if (cur >= REEL_END) { autoplay = false; return; }
+    autoWait = isSentence(cur) ? DWELL_SENTENCE : DWELL_REST;
+    beginDwell(1);
+  }
+
+  function pauseAuto() {
+    if (!autoplay || paused || cur >= REEL_END) return;
+    paused = true;
+    const el = panels[cur], sc = getScale(el);
+    el.style.transition = "none"; el.style.transform = `scale(${sc})`;
+    autoWait = Math.max(180, autoWait - (performance.now() - autoStart));
+    clearTimeout(autoTimer);
+  }
+
+  function resumeAuto() {
+    if (!autoplay || !paused) return;
+    paused = false; beginDwell(getScale(panels[cur]));
+  }
+
+  function startReel() { autoplay = true; paused = false; go(1); }
+  function cancelAuto() { if (autoplay) { autoplay = false; paused = false; clearTimeout(autoTimer); } }
+
+  // pointer drag (touch + mouse): follow-finger, grab, hold-to-pause
+  let down = false, sY = 0, lY = 0, lT = 0, vel = 0, dy = 0, moved = false;
+  stage.addEventListener("pointerdown", (e) => {
+    if (busy) return;
+    down = true; moved = false; sY = lY = e.clientY; lT = performance.now(); dy = 0; vel = 0;
+    stage.setPointerCapture(e.pointerId);
+    if (autoplay) pauseAuto(); else { clearTimeout(autoTimer); preview(0, true); }
+  });
+  stage.addEventListener("pointermove", (e) => {
+    if (!down) return;
+    const now = performance.now(); dy = e.clientY - sY; if (now > lT) vel = (e.clientY - lY) / (now - lT);
+    lY = e.clientY; lT = now;
+    if (Math.abs(dy) > 8) moved = true;
+    if (moved) preview(dy, true);
+  });
+  function endDrag() {
+    if (!down) return; down = false;
+    const fwd = dy < 0, p = clamp(Math.abs(dy) / commitDist(), 0, 1), flick = Math.abs(vel) > FLICK_V;
+    if (moved && (p >= THRESHOLD || flick)) {
+      if (fwd) {
+        const t = arriveTarget(); if (t < 0) { if (paused) resumeAuto(); else snapBack(); return; }
+        if (cur === 0 && t === 1) startReel(); else { cancelAuto(); go(t); }
+      } else {
+        const t = backTarget(); if (t < 0) { if (paused) resumeAuto(); else snapBack(); return; }
+        cancelAuto(); go(t);
+      }
+    } else if (paused) {
+      if (moved) { snapBack(); paused = false; scheduleNext(); } else resumeAuto();
+    } else { snapBack(); scheduleNext(); }
+  }
+  stage.addEventListener("pointerup", endDrag);
+  stage.addEventListener("pointercancel", endDrag);
+
+  // wheel / trackpad: discrete one-step-per-gesture, never stuck, no grab
+  let wAccum = 0, wTimer = null, wCool = false;
+  const wTrig = () => Math.max(48, vh() * 0.10);
+  stage.addEventListener("wheel", (e) => {
+    e.preventDefault();
+    if (busy || wCool) return;
+    clearTimeout(autoTimer); wAccum += -e.deltaY;
+    if (wAccum < 0 && arriveTarget() < 0) { wAccum = 0; return; }
+    if (wAccum > 0 && backTarget() < 0) { wAccum = 0; return; }
+    preview(wAccum, false);
+    if (Math.abs(wAccum) >= wTrig()) {
+      const fwd = wAccum < 0; wAccum = 0; clearTimeout(wTimer);
+      if (fwd) { const t = arriveTarget(); if (cur === 0 && t === 1) startReel(); else { cancelAuto(); go(t); } }
+      else { const t = backTarget(); cancelAuto(); go(t); }
+      wCool = true; setTimeout(() => { wCool = false; }, WHEEL_COOLDOWN);
+    } else {
+      clearTimeout(wTimer);
+      wTimer = setTimeout(() => { if (!busy) { snapBack(); scheduleNext(); wAccum = 0; } }, 170);
+    }
+  }, { passive: false });
+
+  window.addEventListener("resize", () => { if (!busy && !paused) settle(); });
+  settle();
 }
 
-document.querySelectorAll("[data-zoom-wrap]").forEach(initZoom);
+document.querySelectorAll("[data-zoom-wrap]").forEach(initJourney);
 
 /* ---- cast: click a name → a native horizontal scroll-snap filmstrip --------
    Real horizontal scrolling — follows the finger, native momentum — that snaps
