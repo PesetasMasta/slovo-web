@@ -26,29 +26,31 @@ The entire site is three files: `index.html`, `styles.css`, `script.js`. Czech-o
 
 ## Architecture
 
-The whole page is **one continuous, scroll-driven zoom** — not normal scrolling.
+The page is a **fixed full-viewport stage**, navigated by gesture — not by scrolling.
 
-- One pinned section `.zoom-wrap` → sticky `.zoom-pin` → `.zoom-stage` holds ~11
-  full-screen `.zoom-panel`s in order: hero → opening photo → prologue → the five
-  words (S/L/O/V/O, Očista is a black "semantic-satiation" frame) → slovo o slově
-  → Herci (credits) → Sledovat (footer). Each panel zooms into the next.
-- `script.js` `initZoom(wrap)` drives it. Scroll position → `u` along a timeline of
-  unit-length transitions; `render(progress)` sets each panel's `transform: scale`,
-  `opacity`, `z-index`, `visibility` and `pointer-events` every frame.
-  - **Leaving** panel (`local >= 0`) zooms toward the viewer (`ZOOM_IN`) and fades.
-  - **Arriving** panel (`local < 0`) zooms in from slightly smaller (`ZOOM_FROM`).
-    Tuning these three constants (`ZOOM_IN`, `ZOOM_FROM`, `FADE_IN`) changes the feel.
-  - Only the centred frame gets `pointer-events: auto` — leaving frames are huge and
-    invisible but would otherwise steal clicks (this is why links like Sledovat /
-    cast names work). Keep this when adding interactive content to a panel.
-  - `.zoom-stage` has its own `z-index` so panel z-indexes stay contained and the
-    `.acronym` navigator paints on top.
+- One pinned section `.zoom-wrap` → fixed `.zoom-pin` → `.zoom-stage` holds ~11
+  full-screen `.zoom-panel`s. From the visitor's view they collapse into **4 manual
+  stops** — hero → "slovo o slově" → Herci (credits) → Sledovat (footer) — with the
+  opening photo, prologue and the five words (S/L/O/V/O) playing as an **autoplay
+  reel** between hero and the word stop.
+- `script.js` `initJourney(wrap)` drives it. **Manual** moves between stops use a
+  follow-finger **slide + reveal** (`go()`): the leaving panel translates with the
+  finger and fades while the next zooms in from `ZOOM_FROM`. The **autoplay reel**
+  uses a **zoom-through** (`autoZoom()`): a slow pre-zoom (`SLOW_TO`) that
+  accelerates (ease-in) — current panel zooms toward the viewer and fades, next
+  zooms in. Touch/scroll both drive it; scroll has no zoom-out "grab". Hold pauses
+  the reel; a forward gesture during the reel skips to Cast, a backward one returns
+  to hero. Every transition forces a reflow before animating (prevents an
+  arrival "jump"). Only the centred panel is clickable.
+- Tuning lives in the constants at the top of `initJourney` (`GRAB`, `ZOOM_FROM`,
+  `AUTO_ZOOM`, `AUTO_DUR`, `EASE_IN`, `SLOW_TO`, `DWELL_SENTENCE`, `DWELL_REST`, …).
+- Full design + rationale: `docs/superpowers/specs/2026-06-24-follow-finger-navigation-design.md`.
 
 ### Per-panel data attributes (how the engine knows what to do)
 
 - `data-panel` — marks a frame.
-- `data-dwell="0.8"` — adds scroll units where the panel stays centred (used on the
-  credits + footer so their clickable content is easy to land on).
+- `data-stop` — marks one of the 4 manual stops (hero, slovo-o-slově, credits,
+  footer). Panels without it are reel frames the autoplay plays through.
 - `data-acronym="0..4"` — maps a word panel to its letter in the top S·L·O·V·O
   indicator (mapping is NOT positional — set this when adding/reordering word panels).
 - `data-assemble` — runs the prologue word-by-word reveal when that panel centres.
