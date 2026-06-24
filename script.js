@@ -195,7 +195,6 @@ function initJourney(wrap) {
   stage.addEventListener("pointerdown", (e) => {
     if (busy) return;
     down = true; moved = false; sY = lY = e.clientY; lT = performance.now(); dy = 0; vel = 0;
-    stage.setPointerCapture(e.pointerId);
     if (autoplay) pauseAuto(); else { clearTimeout(autoTimer); preview(0, true); }
   });
   stage.addEventListener("pointermove", (e) => {
@@ -218,7 +217,7 @@ function initJourney(wrap) {
       }
     } else if (paused) {
       if (moved) { snapBack(); paused = false; scheduleNext(); } else resumeAuto();
-    } else { snapBack(); scheduleNext(); }
+    } else { if (moved) snapBack(); scheduleNext(); }
   }
   stage.addEventListener("pointerup", endDrag);
   stage.addEventListener("pointercancel", endDrag);
