@@ -103,27 +103,27 @@ function initJourney(wrap) {
     } else settle();
   }
 
-  // MANUAL transition: slide + reveal (forward or backward)
+  // MANUAL transition: slide + reveal. Continues from the current (live preview)
+  // transform so there is no jump on release — only non-participating panels are
+  // hidden; cur and target animate from where the drag/scroll left them.
   function go(target) {
     if (busy || target === cur || target < 0) return;
     busy = true; const h = vh(), dir = target > cur ? -1 : 1;
     const ease = `transform ${DUR}ms ${MANUAL_EASE}, opacity ${DUR}ms ease`;
     panels.forEach((el, i) => { if (i !== cur && i !== target) hide(el); });
-    if (dir < 0) {
-      const leave = panels[cur], arr = panels[target];
-      leave.style.transition = "none"; leave.style.zIndex = "20"; leave.style.visibility = "visible"; leave.style.transform = "translateY(0) scale(1)"; leave.style.opacity = "1"; leave.style.pointerEvents = "none";
-      arr.style.transition = "none"; arr.style.zIndex = "10"; arr.style.visibility = "visible"; arr.style.transform = `scale(${ZOOM_FROM})`; arr.style.opacity = "0"; arr.style.pointerEvents = "none";
-      reflow();
-      leave.style.transition = ease; arr.style.transition = ease;
+    const leave = panels[cur], arr = panels[target];
+    leave.style.visibility = "visible"; leave.style.pointerEvents = "none";
+    arr.style.visibility = "visible"; arr.style.pointerEvents = "none";
+    if (dir < 0) { leave.style.zIndex = "20"; arr.style.zIndex = "10"; }
+    else { leave.style.zIndex = "10"; arr.style.zIndex = "20"; }
+    reflow();                       // commit the current (preview) transform first
+    leave.style.transition = ease; arr.style.transition = ease;
+    if (dir < 0) {                  // forward: cur slides up, target zooms in
       leave.style.transform = `translateY(${-h * 1.05}px) scale(${GRAB})`; leave.style.opacity = "0";
       arr.style.transform = "scale(1)"; arr.style.opacity = "1";
-    } else {
-      const incoming = panels[target], behind = panels[cur];
-      incoming.style.transition = "none"; incoming.style.zIndex = "20"; incoming.style.visibility = "visible"; incoming.style.transform = `translateY(${-h}px) scale(1)`; incoming.style.opacity = "1"; incoming.style.pointerEvents = "none";
-      behind.style.transition = "none"; behind.style.zIndex = "10"; behind.style.visibility = "visible"; behind.style.transform = "scale(1)"; behind.style.opacity = "1"; behind.style.pointerEvents = "none";
-      reflow();
-      incoming.style.transition = ease; behind.style.transition = ease;
-      incoming.style.transform = "translateY(0) scale(1)"; behind.style.transform = `scale(${ZOOM_FROM})`; behind.style.opacity = "0";
+    } else {                        // backward: target slides down in, cur recedes
+      arr.style.transform = "translateY(0) scale(1)"; arr.style.opacity = "1";
+      leave.style.transform = `scale(${ZOOM_FROM})`; leave.style.opacity = "0";
     }
     setTimeout(() => { cur = target; settle(); busy = false; onLand(); }, DUR);
   }
