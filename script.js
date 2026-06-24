@@ -103,10 +103,12 @@ function initJourney(wrap) {
     } else settle();
   }
 
-  // MANUAL transition: slide + reveal. Continues from the current (live preview)
-  // transform so there is no jump on release — only non-participating panels are
-  // hidden; cur and target animate from where the drag/scroll left them.
-  function go(target) {
+  // MANUAL transition: slide + reveal.
+  //  - touch (fromStart falsy): continues from the current live-preview transform,
+  //    so the page animates from where the finger left it (no jump).
+  //  - scroll (fromStart true): begins from the clean start state, so a single
+  //    scroll notch doesn't "pop" the arriving page to a partial size.
+  function go(target, fromStart) {
     if (busy || target === cur || target < 0) return;
     busy = true; const h = vh(), dir = target > cur ? -1 : 1;
     const ease = `transform ${DUR}ms ${MANUAL_EASE}, opacity ${DUR}ms ease`;
@@ -116,7 +118,12 @@ function initJourney(wrap) {
     arr.style.visibility = "visible"; arr.style.pointerEvents = "none";
     if (dir < 0) { leave.style.zIndex = "20"; arr.style.zIndex = "10"; }
     else { leave.style.zIndex = "10"; arr.style.zIndex = "20"; }
-    reflow();                       // commit the current (preview) transform first
+    if (fromStart) {                // clean start state (scroll has no drag position)
+      leave.style.transition = "none"; arr.style.transition = "none";
+      if (dir < 0) { leave.style.transform = "translateY(0) scale(1)"; leave.style.opacity = "1"; arr.style.transform = `scale(${ZOOM_FROM})`; arr.style.opacity = "0"; }
+      else { arr.style.transform = `translateY(${-h}px) scale(1)`; arr.style.opacity = "1"; leave.style.transform = "scale(1)"; leave.style.opacity = "1"; }
+    }
+    reflow();                       // commit current (drag) or just-set (scroll) transform
     leave.style.transition = ease; arr.style.transition = ease;
     if (dir < 0) {                  // forward: cur slides up, target zooms in
       leave.style.transform = `translateY(${-h * 1.05}px) scale(${GRAB})`; leave.style.opacity = "0";
@@ -187,7 +194,7 @@ function initJourney(wrap) {
     paused = false; beginDwell(getScale(panels[cur]));
   }
 
-  function startReel() { autoplay = true; paused = false; go(1); }
+  function startReel(fromStart) { autoplay = true; paused = false; go(1, fromStart); }
   function cancelAuto() { if (autoplay) { autoplay = false; paused = false; clearTimeout(autoTimer); } }
 
   // pointer drag (touch + mouse): follow-finger, grab, hold-to-pause
@@ -222,7 +229,9 @@ function initJourney(wrap) {
   stage.addEventListener("pointerup", endDrag);
   stage.addEventListener("pointercancel", endDrag);
 
-  // wheel / trackpad: discrete one-step-per-gesture, never stuck, no grab
+  // wheel / trackpad: discrete one-step-per-gesture, never stuck. No live scrub —
+  // a clean from-start transition avoids the arriving-page "pop" a partial preview
+  // caused on a single scroll notch. No grab.
   let wAccum = 0, wTimer = null, wCool = false;
   const wTrig = () => Math.max(48, vh() * 0.10);
   stage.addEventListener("wheel", (e) => {
@@ -231,15 +240,14 @@ function initJourney(wrap) {
     clearTimeout(autoTimer); wAccum += -e.deltaY;
     if (wAccum < 0 && arriveTarget() < 0) { wAccum = 0; return; }
     if (wAccum > 0 && backTarget() < 0) { wAccum = 0; return; }
-    preview(wAccum, false);
     if (Math.abs(wAccum) >= wTrig()) {
       const fwd = wAccum < 0; wAccum = 0; clearTimeout(wTimer);
-      if (fwd) { const t = arriveTarget(); if (cur === 0 && t === 1) startReel(); else { cancelAuto(); go(t); } }
-      else { const t = backTarget(); cancelAuto(); go(t); }
+      if (fwd) { const t = arriveTarget(); if (cur === 0 && t === 1) startReel(true); else { cancelAuto(); go(t, true); } }
+      else { const t = backTarget(); cancelAuto(); go(t, true); }
       wCool = true; setTimeout(() => { wCool = false; }, WHEEL_COOLDOWN);
     } else {
       clearTimeout(wTimer);
-      wTimer = setTimeout(() => { if (!busy) { snapBack(); scheduleNext(); wAccum = 0; } }, 170);
+      wTimer = setTimeout(() => { if (!busy) { scheduleNext(); wAccum = 0; } }, 170);
     }
   }, { passive: false });
 
