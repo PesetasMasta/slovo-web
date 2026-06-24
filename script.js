@@ -64,6 +64,7 @@ function initJourney(wrap) {
         el.style.transition = "none"; el.style.transform = "scale(1)"; el.style.opacity = "1";
         el.style.visibility = "visible"; el.style.zIndex = "20"; el.style.pointerEvents = "auto";
       } else hide(el);
+      el.classList.toggle("is-here", i === cur);   // entrance hook (e.g. .piece__inner appear)
     });
     paintChrome();
   }
