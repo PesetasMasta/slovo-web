@@ -84,6 +84,22 @@ Used for: advancing between reel frames while autoplay runs.
 - **Dwell timing:** the **sentence/prologue** page holds **5 s** (assembles
   word-by-word at 150 ms/word, then rests); **every other** reel frame ~**1.2 s**.
 
+### Pause on hold
+
+While the reel autoplays, **press and hold** (touch or mouse-down) pauses it:
+
+- On `pointerdown` the autoplay **freezes** — the slow zoom is pinned at its current
+  scale, the dwell timer is cleared, and the remaining dwell is remembered.
+- On **release without a real drag** (a tap/hold) the reel **resumes from exactly
+  where it paused**, continuing the *remaining* dwell from the pinned scale (no
+  reset, no jump back to the frame's start).
+- If the hold turns into a **drag past the commit threshold**, it's navigation
+  instead (skip to Cast / back to Hero) and autoplay is cancelled.
+- A small drag that doesn't commit, then release, snaps back and resumes the reel
+  fresh on the current frame.
+- A minimum remaining dwell of ~180 ms is enforced so a release right before the
+  page-change still shows a beat rather than firing instantly.
+
 ### Entering, skipping, and finishing the reel
 
 - **Enter:** swiping forward from Hero is a manual slide into the opening frame;
